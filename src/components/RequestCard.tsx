@@ -70,7 +70,7 @@ export default function RequestCard({
                 <div className="flex items-center gap-4 text-xs text-gray-500">
                     <span><IoCalendarOutline className="inline mr-1" /> {startDate} → {endDate}</span>
                     <span>• {days} day{days > 1 ? "s" : ""}</span>
-                    <span className="ml-auto font-semibold text-gray-900">${total}</span>
+                    <span className="ml-auto font-semibold text-gray-900">₹{total}</span>
                 </div>
             </div>
 

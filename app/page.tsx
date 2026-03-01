@@ -55,77 +55,123 @@ export default function HomePage() {
     <div className="min-h-screen bg-white">
 
       {/* ── HERO ── */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
-        {/* Background pattern */}
-        <div className="absolute inset-0 opacity-10"
-          style={{
-            backgroundImage: "radial-gradient(circle, #FF385C 1px, transparent 1px)",
-            backgroundSize: "32px 32px",
-          }}
-        />
+      <section className="relative overflow-hidden bg-white pt-20 pb-24 lg:pt-32 lg:pb-32">
+        {/* Abstract shapes / Glows for a modern feel */}
+        <div className="absolute top-0 right-0 -translate-y-12 translate-x-1/3 w-[800px] h-[800px] bg-[#FF385C]/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
 
-        <Container className="relative py-24 md:py-32">
-          <div className="max-w-3xl">
-            <Badge variant="airbnb" className="mb-6 text-sm px-4 py-1.5 flex w-max items-center">
-              <IoStar className="mr-1.5 text-yellow-400 text-lg mb-0.5" /> Share tools, build community
-            </Badge>
-            <h1 className="text-5xl md:text-6xl font-black leading-tight mb-6 tracking-tight">
-              The tools you need{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF385C] to-[#E91E8C]">
-                from your neighbors
-              </span>
-            </h1>
-            <p className="text-xl text-gray-300 mb-10 max-w-xl leading-relaxed">
-              ToolHive connects your neighborhood — borrow what you need, share what you have. Skip the hardware store.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link href="/browse">
-                <Button variant="primary" size="lg" className="text-base font-bold px-8 py-4">
-                  <IoSearchOutline className="inline mr-2 text-xl -mt-0.5" /> Find Tools Nearby
-                </Button>
-              </Link>
-              <Link href="/my-tools">
-                <Button variant="outline" size="lg"
-                  className="text-base font-bold px-8 py-4 border-2 border-white text-white hover:bg-white hover:text-gray-900">
-                  + List Your Tools
-                </Button>
-              </Link>
+        <Container className="relative">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
+
+            {/* Left Box: Copy */}
+            <div className="max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FF385C]/10 text-[#FF385C] font-semibold text-sm mb-8 border border-[#FF385C]/20 shrink-0">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FF385C] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FF385C]"></span>
+                </span>
+                The local neighborhood tool network
+              </div>
+
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-gray-900 leading-[1.1] mb-6 tracking-tight capitalize">
+                Borrow the <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF385C] to-[#E91E8C]">
+                  perfect tool
+                </span><br />
+                from a neighbor.
+              </h1>
+
+              <p className="text-lg lg:text-xl text-gray-600 mb-10 leading-relaxed max-w-lg font-medium">
+                Why buy a power drill you&apos;ll use exactly once? Join ToolHive to borrow what you need, share what you have, and instantly connect with your neighborhood.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link href="/browse">
+                  <Button variant="primary" size="lg" className="text-base font-bold px-8 py-4 shadow-lg shadow-[#FF385C]/30 hover:shadow-[#FF385C]/40 hover:-translate-y-0.5 transition-all">
+                    <IoSearchOutline className="inline mr-2 text-xl" /> Browse Tools
+                  </Button>
+                </Link>
+                <Link href="/my-tools">
+                  <Button variant="outline" size="lg"
+                    className="text-base font-bold px-8 py-4 bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-200 hover:border-gray-300 transition-colors">
+                    + List Your Tools
+                  </Button>
+                </Link>
+              </div>
+
+              {/* Trust Indicators */}
+              <div className="mt-12 flex flex-wrap items-center gap-6 text-sm text-gray-500 font-semibold">
+                <div className="flex items-center gap-2">
+                  <IoShieldCheckmarkOutline className="text-xl text-emerald-500" /> Verified users
+                </div>
+                <div className="flex items-center gap-2">
+                  <IoPeopleOutline className="text-xl text-blue-500" /> 50+ neighborhoods
+                </div>
+              </div>
+            </div>
+
+            {/* Right Box: Visuals */}
+            <div className="relative hidden lg:block h-[620px] w-full">
+              {/* Main big image */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[440px] aspect-[4/5] rounded-[2rem] overflow-hidden shadow-2xl shadow-gray-200 z-10 border-8 border-white group">
+                <Image
+                  src="https://images.unsplash.com/photo-1504148455328-c376907d081c?w=1200&q=80"
+                  alt="Neighbor sharing tool"
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-700"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  priority
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-gray-900/20 to-transparent" />
+                <div className="absolute bottom-6 left-6 right-6 text-white">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-full border-2 border-white overflow-hidden relative shadow-md">
+                      <Image src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80" alt="Avatar" fill className="object-cover" />
+                    </div>
+                    <span className="font-semibold text-sm drop-shadow-md tracking-wide text-gray-100">Sarah from Bengaluru, KA</span>
+                  </div>
+                  <h3 className="text-2xl font-black drop-shadow-lg mb-1 tracking-tight">DeWalt Cordless Drill</h3>
+                  <p className="text-sm text-white/90 drop-shadow-md flex items-center gap-1 font-semibold"><IoStar className="text-yellow-400 text-lg" /> 5.0 · ₹400/day</p>
+                </div>
+              </div>
+
+              {/* Floating Element 1 - Top Right */}
+              <div className="absolute top-16 -right-8 bg-white/90 backdrop-blur-md px-5 py-4 rounded-2xl shadow-xl border border-white z-20 animate-[bounce_6s_ease-in-out_infinite]">
+                <div className="flex items-center gap-3 w-max">
+                  <div className="w-12 h-12 bg-emerald-100/80 text-emerald-600 rounded-full flex items-center justify-center text-xl shadow-inner">
+                    <IoShieldCheckmarkOutline />
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mb-0.5">Status</p>
+                    <p className="text-sm font-black text-gray-900">Request Approved</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Floating Element 2 - Bottom Left */}
+              <div className="absolute bottom-28 -left-12 bg-white/90 backdrop-blur-md px-5 py-4 rounded-2xl shadow-xl border border-white z-20 animate-[bounce_5s_ease-in-out_infinite_reverse]">
+                <div className="flex items-center gap-4 w-max">
+                  <div className="w-14 h-14 relative rounded-xl overflow-hidden shadow-md border-2 border-gray-100">
+                    <Image src="https://images.unsplash.com/photo-1589923188651-268a9765e432?w=200&q=80" alt="Tool" fill className="object-cover" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-black text-gray-900 leading-tight">Orbital Sander</p>
+                    <p className="text-xs text-gray-500 font-medium mb-1.5">Rented by Mark</p>
+                    <div className="flex items-center gap-1.5 bg-[#FF385C]/10 px-2 py-0.5 rounded-md w-max">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#FF385C] animate-pulse"></span>
+                      <span className="text-[11px] font-bold text-[#FF385C] uppercase tracking-wide">Due Today</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Decorative dotted pattern */}
+              <div className="absolute top-1/4 -right-12 w-32 h-32 opacity-20"
+                style={{ backgroundImage: "radial-gradient(#FF385C 2px, transparent 2px)", backgroundSize: "16px 16px" }}
+              />
             </div>
           </div>
         </Container>
-
-        {/* Floating tool images */}
-        <div className="absolute right-0 top-0 h-full w-1/3 hidden lg:block overflow-hidden">
-          <div className="relative h-full">
-            <div className="absolute top-8 right-12 w-48 h-32 rounded-2xl overflow-hidden shadow-2xl rotate-3 opacity-80">
-              <Image
-                src="https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=80"
-                alt="Tool"
-                fill
-                className="object-cover"
-                sizes="200px"
-              />
-            </div>
-            <div className="absolute top-44 right-4 w-40 h-28 rounded-2xl overflow-hidden shadow-2xl -rotate-2 opacity-70">
-              <Image
-                src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&q=80"
-                alt="Tool"
-                fill
-                className="object-cover"
-                sizes="160px"
-              />
-            </div>
-            <div className="absolute bottom-16 right-16 w-44 h-30 rounded-2xl overflow-hidden shadow-2xl rotate-1 opacity-75">
-              <Image
-                src="https://images.unsplash.com/photo-1589923188651-268a9765e432?w=400&q=80"
-                alt="Tool"
-                fill
-                className="object-cover"
-                sizes="180px"
-              />
-            </div>
-          </div>
-        </div>
       </section>
 
       {/* ── STATS ── */}

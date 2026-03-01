@@ -54,7 +54,7 @@ export default function MyToolCard({ tool, onEdit, onDelete, onToggleAvailabilit
                         <span className="font-medium text-gray-700">{rating}</span> ({reviewCount})
                     </span>
                     <span className="text-sm font-bold text-gray-900">
-                        ${pricePerDay}<span className="text-xs font-normal text-gray-500">/day</span>
+                        ₹{pricePerDay}<span className="text-xs font-normal text-gray-500">/day</span>
                     </span>
                 </div>
 

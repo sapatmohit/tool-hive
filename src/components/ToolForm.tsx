@@ -133,7 +133,7 @@ export default function ToolForm({ initial = null, onSubmit, onCancel, loading =
                     placeholder="12"
                     value={form.pricePerDay}
                     onChange={(e) => set("pricePerDay", e.target.value)}
-                    prefix="$"
+                    prefix="₹"
                     error={errors.pricePerDay}
                     required
                 />

@@ -124,7 +124,7 @@ export default function ToolDetailsPage() {
                         {/* Booking panel */}
                         <div className="bg-white rounded-2xl border border-gray-200 shadow-lg p-6 sticky top-24">
                             <div className="flex items-end gap-2 mb-4">
-                                <span className="text-3xl font-extrabold text-gray-900">${tool.pricePerDay}</span>
+                                <span className="text-3xl font-extrabold text-gray-900">₹{tool.pricePerDay}</span>
                                 <span className="text-gray-500 mb-1 text-sm">/day</span>
                             </div>
 
@@ -186,7 +186,7 @@ export default function ToolDetailsPage() {
             <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Request to Borrow">
                 <form onSubmit={handleRequest} className="flex flex-col gap-4">
                     <div className="bg-gray-50 rounded-xl p-3 text-sm text-gray-700">
-                        <span className="font-semibold">{tool.name}</span> — ${tool.pricePerDay}/day
+                        <span className="font-semibold">{tool.name}</span> — ₹{tool.pricePerDay}/day
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
@@ -210,7 +210,7 @@ export default function ToolDetailsPage() {
 
                     {form.startDate && form.endDate && (
                         <div className="text-sm text-gray-600 bg-blue-50 rounded-xl px-4 py-3">
-                            {days} day{days > 1 ? "s" : ""} · <strong>${(tool.pricePerDay * days).toFixed(2)}</strong> total
+                            {days} day{days > 1 ? "s" : ""} · <strong>₹{Math.round(tool.pricePerDay * days)}</strong> total
                         </div>
                     )}
 

@@ -61,7 +61,7 @@ export default function ToolCard({ tool }: ToolCardProps) {
                         </span>
                         {/* Price */}
                         <span className="text-sm font-bold text-gray-900">
-                            ${pricePerDay}
+                            ₹{pricePerDay}
                             <span className="text-xs font-normal text-gray-500">/day</span>
                         </span>
                     </div>
