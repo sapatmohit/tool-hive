@@ -16,6 +16,7 @@ import { get } from "@/services/apiClient";
 import { useAuth } from "@/context/AuthContext";
 import { IoLocationOutline, IoCheckmarkCircleOutline } from "react-icons/io5";
 import { Tool, User } from "@/types";
+import { getAllTools } from "@/services/browseService";
 
 export default function ToolDetailsPage() {
     const { id } = useParams() as { id: string };
