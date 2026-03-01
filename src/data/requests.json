@@ -1,0 +1,90 @@
+[
+    {
+        "id": "req-001",
+        "toolId": "tool-002",
+        "requesterId": "user-004",
+        "ownerId": "user-002",
+        "startDate": "2026-03-10",
+        "endDate": "2026-03-12",
+        "status": "pending",
+        "message": "Hi! I'm remodeling my kitchen and would love to borrow your circular saw for a weekend.",
+        "createdAt": "2026-03-01T08:30:00Z"
+    },
+    {
+        "id": "req-002",
+        "toolId": "tool-003",
+        "requesterId": "user-002",
+        "ownerId": "user-001",
+        "startDate": "2026-03-05",
+        "endDate": "2026-03-05",
+        "status": "approved",
+        "message": "Need to clean the patio before a party. Would appreciate borrowing the pressure washer!",
+        "createdAt": "2026-02-28T14:00:00Z"
+    },
+    {
+        "id": "req-003",
+        "toolId": "tool-001",
+        "requesterId": "user-003",
+        "ownerId": "user-001",
+        "startDate": "2026-03-08",
+        "endDate": "2026-03-09",
+        "status": "pending",
+        "message": "Building some shelves in the garage, need a good drill. Thanks!",
+        "createdAt": "2026-03-01T10:15:00Z"
+    },
+    {
+        "id": "req-004",
+        "toolId": "tool-005",
+        "requesterId": "user-001",
+        "ownerId": "user-002",
+        "startDate": "2026-03-15",
+        "endDate": "2026-03-15",
+        "status": "approved",
+        "message": "Spring mowing season is starting. Can I borrow the lawn mower this Sunday?",
+        "createdAt": "2026-03-01T09:45:00Z"
+    },
+    {
+        "id": "req-005",
+        "toolId": "tool-007",
+        "requesterId": "user-001",
+        "ownerId": "user-005",
+        "startDate": "2026-03-20",
+        "endDate": "2026-03-22",
+        "status": "pending",
+        "message": "Painting the fence this weekend! The sprayer would make it so much easier.",
+        "createdAt": "2026-03-01T11:00:00Z"
+    },
+    {
+        "id": "req-006",
+        "toolId": "tool-009",
+        "requesterId": "user-002",
+        "ownerId": "user-004",
+        "startDate": "2026-03-06",
+        "endDate": "2026-03-07",
+        "status": "rejected",
+        "message": "Need the air compressor to inflate some sports equipment and do some tire work.",
+        "createdAt": "2026-02-27T16:30:00Z"
+    },
+    {
+        "id": "req-007",
+        "toolId": "tool-011",
+        "requesterId": "user-004",
+        "ownerId": "user-001",
+        "startDate": "2026-03-18",
+        "endDate": "2026-03-18",
+        "status": "pending",
+        "message": "Planting a row of trees along the back fence. The auger would save so much time!",
+        "createdAt": "2026-03-01T13:00:00Z"
+    },
+    {
+        "id": "req-008",
+        "toolId": "tool-015",
+        "requesterId": "user-002",
+        "ownerId": "user-003",
+        "startDate": "2026-03-04",
+        "endDate": "2026-03-04",
+        "status": "approved",
+        "message": "Yard clean-up this weekend! Leaf blower would be perfect.",
+        "createdAt": "2026-02-29T08:00:00Z"
+    }
+]

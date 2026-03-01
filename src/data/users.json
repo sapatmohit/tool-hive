@@ -1,0 +1,67 @@
+[
+    {
+        "id": "user-001",
+        "name": "Alex Martinez",
+        "email": "alex.martinez@email.com",
+        "avatar": "https://randomuser.me/api/portraits/men/32.jpg",
+        "location": "Austin, TX",
+        "rating": 4.9,
+        "reviewCount": 47,
+        "memberSince": "2023-03-15",
+        "bio": "DIY enthusiast and weekend woodworker. Happy to share my tools with the neighborhood!",
+        "toolsListed": 3,
+        "toolsBorrowed": 12
+    },
+    {
+        "id": "user-002",
+        "name": "Sarah Kim",
+        "email": "sarah.kim@email.com",
+        "avatar": "https://randomuser.me/api/portraits/women/44.jpg",
+        "location": "Austin, TX",
+        "rating": 4.8,
+        "reviewCount": 32,
+        "memberSince": "2023-06-20",
+        "bio": "Interior designer with a passion for home renovation. Always happy to lend a hand!",
+        "toolsListed": 3,
+        "toolsBorrowed": 8
+    },
+    {
+        "id": "user-003",
+        "name": "Marcus Johnson",
+        "email": "marcus.johnson@email.com",
+        "avatar": "https://randomuser.me/api/portraits/men/54.jpg",
+        "location": "Cedar Park, TX",
+        "rating": 4.7,
+        "reviewCount": 29,
+        "memberSince": "2023-09-10",
+        "bio": "Retired contractor with a garage full of tools. Love helping neighbors with projects.",
+        "toolsListed": 3,
+        "toolsBorrowed": 5
+    },
+    {
+        "id": "user-004",
+        "name": "Priya Patel",
+        "email": "priya.patel@email.com",
+        "avatar": "https://randomuser.me/api/portraits/women/67.jpg",
+        "location": "Round Rock, TX",
+        "rating": 4.6,
+        "reviewCount": 18,
+        "memberSince": "2024-01-05",
+        "bio": "First-time homeowner learning to tackle projects myself. Share and borrow!",
+        "toolsListed": 3,
+        "toolsBorrowed": 15
+    },
+    {
+        "id": "user-005",
+        "name": "Tom Nguyen",
+        "email": "tom.nguyen@email.com",
+        "avatar": "https://randomuser.me/api/portraits/men/73.jpg",
+        "location": "Austin, TX",
+        "rating": 4.9,
+        "reviewCount": 52,
+        "memberSince": "2022-11-30",
+        "bio": "Professional carpenter and avid community builder. Tools should be shared, not stored.",
+        "toolsListed": 3,
+        "toolsBorrowed": 3
+    }
+]
