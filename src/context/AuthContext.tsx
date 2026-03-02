@@ -1,34 +1,71 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect, useMemo } from "react";
 import usersData from "@/data/users.json";
 import { User } from "@/types";
+
+const STORAGE_KEY = "toolhive_auth_user_id";
 
 interface AuthContextType {
     currentUser: User | null;
     login: (userId: string) => void;
     logout: () => void;
+    isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-/**
- * AuthProvider — wraps the app and exposes the mock logged-in user.
- * In P2, replace the useState initializer with a real auth fetch.
- */
+function getStoredUserId(): string | null {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem(STORAGE_KEY);
+}
+
+function findUser(userId: string | null): User | null {
+    if (!userId) return null;
+    return (usersData.find((u: User) => u.id === userId) as User) ?? null;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    // Mock: current user is always users.json[0] (Alex Martinez)
-    const [currentUser, setCurrentUser] = useState<User | null>(usersData[0] as User);
+    const [isHydrated, setIsHydrated] = useState(false);
+    const [initialUserId, setInitialUserId] = useState<string | null>(null);
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setInitialUserId(getStoredUserId());
+        setIsHydrated(true);
+    }, []);
+
+    const currentUser = useMemo((): User | null => {
+        return isHydrated ? findUser(initialUserId) : null;
+    }, [initialUserId, isHydrated]);
 
     const login = (userId: string) => {
-        const user = usersData.find((u: any) => u.id === userId) as User ?? usersData[0] as User;
-        setCurrentUser(user);
+        const user = findUser(userId) ?? (usersData[0] as User);
+        setInitialUserId(user.id);
+        if (typeof window !== "undefined") {
+            localStorage.setItem(STORAGE_KEY, user.id);
+        }
     };
 
-    const logout = () => setCurrentUser(null);
+    const logout = () => {
+        setInitialUserId(null);
+        if (typeof window !== "undefined") {
+            localStorage.removeItem(STORAGE_KEY);
+        }
+    };
+
+    const value = useMemo(
+        () => ({
+            currentUser,
+            login,
+            logout,
+            isLoading: !isHydrated,
+        }),
+        [currentUser, isHydrated]
+    );
 
     return (
-        <AuthContext.Provider value={{ currentUser, login, logout }}>
+        <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     );

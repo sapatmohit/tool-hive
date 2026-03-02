@@ -66,9 +66,15 @@ export default function ToolDetailsPage() {
                 message: form.message,
                 status: "pending",
                 createdAt: new Date().toISOString(),
-            });
+            }, currentUser?.id ?? null);
             setRequestSent(true);
             setModalOpen(false);
+        } catch (error) {
+            if (error instanceof Error && error.name === "AuthenticationError") {
+                alert(error.message);
+            } else {
+                alert("Failed to send request. Please try again.");
+            }
         } finally {
             setRequestLoading(false);
         }
@@ -134,6 +140,15 @@ export default function ToolDetailsPage() {
                                     <p className="text-emerald-700 font-semibold flex flex-row items-center justify-center gap-1.5"><IoCheckmarkCircleOutline className="text-xl" /> Request sent!</p>
                                     <p className="text-emerald-600 text-sm mt-1">The owner will respond soon.</p>
                                 </div>
+                            ) : !currentUser ? (
+                                <Button
+                                    variant="outline"
+                                    size="lg"
+                                    fullWidth
+                                    onClick={() => router.push(`/login?redirect=/tool/${tool.id}`)}
+                                >
+                                    Login to Borrow
+                                </Button>
                             ) : (
                                 <Button
                                     variant="primary"
