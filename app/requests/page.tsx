@@ -38,31 +38,13 @@ export default function RequestsPage() {
     useEffect(() => { load(); }, [load]);
 
     const handleApprove = async (id: string) => {
-        if (!currentUser) return;
-        try {
-            await updateRequestStatus(id, "approved", currentUser.id);
-            setRequests((prev) => prev.map((r: BorrowRequest) => (r.id === id ? { ...r, status: "approved" } : r)));
-        } catch (error) {
-            if (error instanceof Error && error.name === "AuthenticationError") {
-                alert(error.message);
-            } else {
-                alert("Failed to update request. Please try again.");
-            }
-        }
+        await updateRequestStatus(id, "approved");
+        setRequests((prev) => prev.map((r: BorrowRequest) => (r.id === id ? { ...r, status: "approved" } : r)));
     };
 
     const handleReject = async (id: string) => {
-        if (!currentUser) return;
-        try {
-            await updateRequestStatus(id, "rejected", currentUser.id);
-            setRequests((prev) => prev.map((r: BorrowRequest) => (r.id === id ? { ...r, status: "rejected" } : r)));
-        } catch (error) {
-            if (error instanceof Error && error.name === "AuthenticationError") {
-                alert(error.message);
-            } else {
-                alert("Failed to update request. Please try again.");
-            }
-        }
+        await updateRequestStatus(id, "rejected");
+        setRequests((prev) => prev.map((r: BorrowRequest) => (r.id === id ? { ...r, status: "rejected" } : r)));
     };
 
     const visible = requests.filter(TAB_FILTERS[activeTab] ?? TAB_FILTERS.all);
