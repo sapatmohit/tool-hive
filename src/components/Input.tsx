@@ -26,6 +26,7 @@ export default function Input({
     prefix,
     suffix,
     className = "",
+    ...rest
 }: InputProps) {
     return (
         <div className={`flex flex-col gap-1.5 ${className}`}>
@@ -52,6 +53,7 @@ export default function Input({
                     onChange={onChange}
                     required={required}
                     disabled={disabled}
+                    {...rest}
                     className={[
                         "w-full rounded-xl border bg-white text-gray-900 text-sm",
                         "px-4 py-3 outline-none transition-all duration-200",
