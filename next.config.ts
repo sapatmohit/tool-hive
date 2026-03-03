@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "ui-avatars.com",
+        hostname: "media.istockphoto.com",
       },
     ],
   },
