@@ -1,22 +1,34 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import Container from "@/components/Container";
 import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import Avatar from "@/components/Avatar";
-import Modal from "@/components/Modal";
-import Input from "@/components/Input";
+import PaymentModal from "@/components/PaymentModal";
 import { Spinner } from "@/components/Loader";
 import { getToolById } from "@/services/browseService";
 import { createRequest } from "@/services/requestService";
 import { get } from "@/services/apiClient";
 import { useAuth } from "@/context/AuthContext";
-import { IoLocationOutline, IoCheckmarkCircleOutline } from "react-icons/io5";
+import {
+    IoLocationOutline,
+    IoCheckmarkCircleOutline,
+    IoCardOutline,
+    IoShieldCheckmarkOutline,
+    IoCopyOutline,
+} from "react-icons/io5";
 import { Tool, User } from "@/types";
-import { getAllTools } from "@/services/browseService";
+import { PaymentResult } from "@/services/paymentService";
+
+interface BookingForm {
+    startDate: string;
+    endDate: string;
+    message: string;
+}
 
 export default function ToolDetailsPage() {
     const { id } = useParams() as { id: string };
@@ -26,10 +38,12 @@ export default function ToolDetailsPage() {
     const [tool, setTool] = useState<Tool | null>(null);
     const [owner, setOwner] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
-    const [modalOpen, setModalOpen] = useState(false);
-    const [requestLoading, setRequestLoading] = useState(false);
-    const [requestSent, setRequestSent] = useState(false);
-    const [form, setForm] = useState({ startDate: "", endDate: "", message: "" });
+    const [payModalOpen, setPayModalOpen] = useState(false);
+
+    // Payment result state
+    const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(null);
+    const [confirmedBooking, setConfirmedBooking] = useState<BookingForm | null>(null);
+    const [copiedTxn, setCopiedTxn] = useState(false);
 
     useEffect(() => {
         async function load() {
@@ -47,25 +61,22 @@ export default function ToolDetailsPage() {
         load();
     }, [id, router]);
 
-    const days =
-        form.startDate && form.endDate
-            ? Math.max(1, Math.ceil((new Date(form.endDate).getTime() - new Date(form.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1)
-            : 1;
+    const handlePaymentSuccess = useCallback(async (result: PaymentResult, booking: BookingForm) => {
+        setPaymentResult(result);
+        setConfirmedBooking(booking);
 
-    const handleRequest = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!currentUser || !tool) return;
-        setRequestLoading(true);
-        try {
+        // Also persist the borrow request in "the system"
+        if (currentUser && tool) {
             await createRequest({
                 toolId: tool.id,
                 requesterId: currentUser.id,
                 ownerId: tool.ownerId,
-                startDate: form.startDate,
-                endDate: form.endDate,
-                message: form.message,
-                status: "pending",
+                startDate: booking.startDate,
+                endDate: booking.endDate,
+                message: booking.message,
+                status: "approved", // auto-approved on payment success
                 createdAt: new Date().toISOString(),
+<<<<<<< authentication
             }, currentUser?.id ?? null);
             setRequestSent(true);
             setModalOpen(false);
@@ -77,11 +88,29 @@ export default function ToolDetailsPage() {
             }
         } finally {
             setRequestLoading(false);
+=======
+            });
+        }
+    }, [currentUser, tool]);
+
+    const copyTxn = () => {
+        if (paymentResult?.transactionId) {
+            navigator.clipboard.writeText(paymentResult.transactionId);
+            setCopiedTxn(true);
+            setTimeout(() => setCopiedTxn(false), 2000);
+>>>>>>> main
         }
     };
 
+    const calcDays = (start: string, end: string) =>
+        start && end
+            ? Math.max(1, Math.ceil((new Date(end).getTime() - new Date(start).getTime()) / 86_400_000) + 1)
+            : 1;
+
     if (loading) return <div className="min-h-screen flex items-center justify-center"><Spinner size="lg" /></div>;
     if (!tool) return null;
+
+    const isPaid = paymentResult?.status === "success";
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -124,21 +153,80 @@ export default function ToolDetailsPage() {
                             </div>
                             <p className="text-gray-600 leading-relaxed">{tool.description}</p>
                         </div>
+
+                        {/* Payment confirmation card (shown after successful payment) */}
+                        {isPaid && confirmedBooking && paymentResult && (
+                            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 space-y-4">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                                        <IoCheckmarkCircleOutline className="text-2xl text-emerald-600" />
+                                    </div>
+                                    <div>
+                                        <p className="font-extrabold text-emerald-800">Booking Confirmed!</p>
+                                        <p className="text-sm text-emerald-600">Your payment was processed successfully.</p>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                    <div className="bg-white rounded-xl p-3 border border-emerald-100">
+                                        <span className="text-gray-400 text-xs font-semibold block mb-0.5">From</span>
+                                        <span className="font-bold text-gray-900">
+                                            {new Date(confirmedBooking.startDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                                        </span>
+                                    </div>
+                                    <div className="bg-white rounded-xl p-3 border border-emerald-100">
+                                        <span className="text-gray-400 text-xs font-semibold block mb-0.5">To</span>
+                                        <span className="font-bold text-gray-900">
+                                            {new Date(confirmedBooking.endDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                                        </span>
+                                    </div>
+                                    <div className="bg-white rounded-xl p-3 border border-emerald-100">
+                                        <span className="text-gray-400 text-xs font-semibold block mb-0.5">Amount Paid</span>
+                                        <span className="font-bold text-gray-900">₹{paymentResult.amount}</span>
+                                    </div>
+                                    <div className="bg-white rounded-xl p-3 border border-emerald-100">
+                                        <span className="text-gray-400 text-xs font-semibold block mb-0.5">Method</span>
+                                        <span className="font-bold text-gray-900 capitalize flex items-center gap-1">
+                                            <IoCardOutline className="text-sm" /> {paymentResult.method}
+                                        </span>
+                                    </div>
+                                </div>
+                                {/* Transaction ID */}
+                                <div className="bg-white rounded-xl border border-emerald-100 p-3">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="text-xs text-gray-400 font-semibold">Transaction ID</span>
+                                        <button
+                                            onClick={copyTxn}
+                                            className="flex items-center gap-1 text-xs text-[#FF385C] font-semibold hover:underline cursor-pointer"
+                                        >
+                                            <IoCopyOutline /> {copiedTxn ? "Copied!" : "Copy"}
+                                        </button>
+                                    </div>
+                                    <p className="font-mono text-xs text-gray-700 break-all">{paymentResult.transactionId}</p>
+                                </div>
+                                <Link href="/borrowed">
+                                    <Button variant="secondary" size="md" fullWidth>
+                                        View in My Borrowed →
+                                    </Button>
+                                </Link>
+                            </div>
+                        )}
                     </div>
 
                     {/* Right: Booking card + Owner */}
-                    <div className="space-y-4">
+                    <div className="space-y-4 sticky top-24 self-start">
                         {/* Booking panel */}
-                        <div className="bg-white rounded-2xl border border-gray-200 shadow-lg p-6 sticky top-24">
+                        <div className="bg-white rounded-2xl border border-gray-200 shadow-lg p-6">
                             <div className="flex items-end gap-2 mb-4">
                                 <span className="text-3xl font-extrabold text-gray-900">₹{tool.pricePerDay}</span>
                                 <span className="text-gray-500 mb-1 text-sm">/day</span>
                             </div>
 
-                            {requestSent ? (
+                            {isPaid ? (
                                 <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
-                                    <p className="text-emerald-700 font-semibold flex flex-row items-center justify-center gap-1.5"><IoCheckmarkCircleOutline className="text-xl" /> Request sent!</p>
-                                    <p className="text-emerald-600 text-sm mt-1">The owner will respond soon.</p>
+                                    <p className="text-emerald-700 font-semibold flex flex-row items-center justify-center gap-1.5">
+                                        <IoCheckmarkCircleOutline className="text-xl" /> Booked & Paid
+                                    </p>
+                                    <p className="text-emerald-600 text-sm mt-1">Enjoy your rental!</p>
                                 </div>
                             ) : !currentUser ? (
                                 <Button
@@ -155,11 +243,20 @@ export default function ToolDetailsPage() {
                                     size="lg"
                                     fullWidth
                                     disabled={!tool.availability || currentUser?.id === tool.ownerId}
-                                    onClick={() => setModalOpen(true)}
+                                    onClick={() => setPayModalOpen(true)}
+                                    className="shadow-lg shadow-[#FF385C]/25 hover:shadow-[#FF385C]/40 hover:-translate-y-0.5 transition-all"
                                 >
                                     {!tool.availability ? "Currently Unavailable" :
-                                        currentUser?.id === tool.ownerId ? "Your Listing" : "Request to Borrow"}
+                                        currentUser?.id === tool.ownerId ? "Your Listing" : "Borrow & Pay Now"}
                                 </Button>
+                            )}
+
+                            {/* Trust badges */}
+                            {!isPaid && tool.availability && currentUser?.id !== tool.ownerId && (
+                                <div className="mt-3 flex items-center justify-center gap-1.5 text-xs text-gray-400">
+                                    <IoShieldCheckmarkOutline className="text-emerald-500" />
+                                    Secure mock payment · No real charge
+                                </div>
                             )}
 
                             <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
@@ -198,56 +295,15 @@ export default function ToolDetailsPage() {
                 </div>
             </Container>
 
-            {/* Request Modal */}
-            <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Request to Borrow">
-                <form onSubmit={handleRequest} className="flex flex-col gap-4">
-                    <div className="bg-gray-50 rounded-xl p-3 text-sm text-gray-700">
-                        <span className="font-semibold">{tool.name}</span> — ₹{tool.pricePerDay}/day
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                        <Input
-                            id="start-date"
-                            label="Start Date"
-                            type="date"
-                            value={form.startDate}
-                            onChange={(e) => setForm((p) => ({ ...p, startDate: e.target.value }))}
-                            required
-                        />
-                        <Input
-                            id="end-date"
-                            label="End Date"
-                            type="date"
-                            value={form.endDate}
-                            onChange={(e) => setForm((p) => ({ ...p, endDate: e.target.value }))}
-                            required
-                        />
-                    </div>
-
-                    {form.startDate && form.endDate && (
-                        <div className="text-sm text-gray-600 bg-blue-50 rounded-xl px-4 py-3">
-                            {days} day{days > 1 ? "s" : ""} · <strong>₹{Math.round(tool.pricePerDay * days)}</strong> total
-                        </div>
-                    )}
-
-                    <div className="flex flex-col gap-1.5">
-                        <label htmlFor="req-msg" className="text-sm font-semibold text-gray-700">Message to owner</label>
-                        <textarea
-                            id="req-msg"
-                            rows={3}
-                            placeholder="Tell the owner why you need it and how you'll use it…"
-                            value={form.message}
-                            onChange={(e) => setForm((p) => ({ ...p, message: e.target.value }))}
-                            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900
-                        resize-none outline-none focus:border-[#FF385C] focus:ring-2 focus:ring-[#FF385C]/20 transition-all"
-                        />
-                    </div>
-
-                    <Button variant="primary" size="lg" type="submit" fullWidth loading={requestLoading}>
-                        Send Request
-                    </Button>
-                </form>
-            </Modal>
+            {/* Payment Modal */}
+            {tool && (
+                <PaymentModal
+                    isOpen={payModalOpen}
+                    onClose={() => setPayModalOpen(false)}
+                    tool={tool}
+                    onSuccess={handlePaymentSuccess}
+                />
+            )}
         </div>
     );
 }
