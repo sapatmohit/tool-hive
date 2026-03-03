@@ -1,3 +1,5 @@
+export type { PaymentResult, PaymentDetails, PaymentMethod, PaymentStatus } from "@/services/paymentService";
+
 export interface User {
     id: string;
     name: string;
