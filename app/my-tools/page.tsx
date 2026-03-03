@@ -42,13 +42,19 @@ export default function MyToolsPage() {
         setSaving(true);
         try {
             if (editTarget) {
-                const updated = await updateTool(editTarget.id, { ...editTarget, ...data });
+                const updated = await updateTool(editTarget.id, { ...editTarget, ...data }, currentUser.id);
                 setTools((prev) => prev.map((t) => (t.id === editTarget.id ? updated : t)));
             } else {
-                const newTool = await addTool({ ...data, ownerId: currentUser.id, rating: 0, reviewCount: 0, id: `tool-${Date.now()}` });
+                const newTool = await addTool({ ...data, ownerId: currentUser.id, rating: 0, reviewCount: 0, id: `tool-${Date.now()}` }, currentUser.id);
                 setTools((prev) => [...prev, newTool]);
             }
             setModalOpen(false);
+        } catch (error) {
+            if (error instanceof Error && error.name === "AuthenticationError") {
+                alert(error.message);
+            } else {
+                alert("Failed to save. Please try again.");
+            }
         } finally {
             setSaving(false);
         }
@@ -56,13 +62,31 @@ export default function MyToolsPage() {
 
     const handleDelete = async (id: string) => {
         if (!window.confirm("Remove this tool listing?")) return;
-        await deleteTool(id);
-        setTools((prev) => prev.filter((t: Tool) => t.id !== id));
+        if (!currentUser) return;
+        try {
+            await deleteTool(id, currentUser.id);
+            setTools((prev) => prev.filter((t: Tool) => t.id !== id));
+        } catch (error) {
+            if (error instanceof Error && error.name === "AuthenticationError") {
+                alert(error.message);
+            } else {
+                alert("Failed to delete. Please try again.");
+            }
+        }
     };
 
     const handleToggle = async (tool: Tool) => {
-        const updated = await updateTool(tool.id, { ...tool, availability: !tool.availability });
-        setTools((prev) => prev.map((t: Tool) => (t.id === updated.id ? { ...t, availability: updated.availability } : t)));
+        if (!currentUser) return;
+        try {
+            const updated = await updateTool(tool.id, { ...tool, availability: !tool.availability }, currentUser.id);
+            setTools((prev) => prev.map((t: Tool) => (t.id === updated.id ? { ...t, availability: updated.availability } : t)));
+        } catch (error) {
+            if (error instanceof Error && error.name === "AuthenticationError") {
+                alert(error.message);
+            } else {
+                alert("Failed to update. Please try again.");
+            }
+        }
     };
 
     return (
