@@ -8,14 +8,17 @@ import Button from "@/components/Button";
 import Input from "@/components/Input";
 import { useAuth } from "@/context/AuthContext";
 
-export default function LoginPage() {
+export default function SignupPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const redirect = searchParams.get("redirect") ?? "/";
-    const { currentUser, login, isLoading } = useAuth();
+    const { currentUser, signup, isLoading } = useAuth();
 
+    const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [location, setLocation] = useState("");
     const [error, setError] = useState("");
     const [submitting, setSubmitting] = useState(false);
 
@@ -28,10 +31,41 @@ export default function LoginPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
+
+        if (!name.trim()) {
+            setError("Name is required.");
+            return;
+        }
+
+        if (!email.trim()) {
+            setError("Email is required.");
+            return;
+        }
+
+        if (!password) {
+            setError("Password is required.");
+            return;
+        }
+
+        if (password.length < 6) {
+            setError("Password must be at least 6 characters.");
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            setError("Passwords do not match.");
+            return;
+        }
+
         setSubmitting(true);
 
         try {
-            login(email, password);
+            signup({
+                name: name.trim(),
+                email: email.trim().toLowerCase(),
+                password,
+                location: location.trim() || undefined,
+            });
             router.push(redirect);
         } catch (err) {
             if (err instanceof Error) {
@@ -61,8 +95,8 @@ export default function LoginPage() {
             <Container>
                 <div className="max-w-md mx-auto">
                     <div className="text-center mb-8">
-                        <h1 className="text-3xl font-black text-gray-900 mb-2">Welcome Back</h1>
-                        <p className="text-gray-500">Sign in to continue to ToolHive</p>
+                        <h1 className="text-3xl font-black text-gray-900 mb-2">Create Account</h1>
+                        <p className="text-gray-500">Join ToolHive and start sharing tools</p>
                     </div>
 
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
@@ -72,6 +106,16 @@ export default function LoginPage() {
                                     {error}
                                 </div>
                             )}
+
+                            <Input
+                                id="name"
+                                label="Full Name"
+                                type="text"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                placeholder="Enter your name"
+                                required
+                            />
 
                             <Input
                                 id="email"
@@ -84,12 +128,31 @@ export default function LoginPage() {
                             />
 
                             <Input
+                                id="location"
+                                label="Location (optional)"
+                                type="text"
+                                value={location}
+                                onChange={(e) => setLocation(e.target.value)}
+                                placeholder="e.g., Mumbai, MH"
+                            />
+
+                            <Input
                                 id="password"
                                 label="Password"
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                placeholder="Enter your password"
+                                placeholder="Create a password"
+                                required
+                            />
+
+                            <Input
+                                id="confirmPassword"
+                                label="Confirm Password"
+                                type="password"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                placeholder="Confirm your password"
                                 required
                             />
 
@@ -100,28 +163,20 @@ export default function LoginPage() {
                                 fullWidth
                                 loading={submitting}
                             >
-                                Sign In
+                                Create Account
                             </Button>
                         </form>
 
                         <div className="mt-6 pt-6 border-t border-gray-100 text-center">
                             <p className="text-gray-500 text-sm">
-                                Don&apos;t have an account?{" "}
+                                Already have an account?{" "}
                                 <Link
-                                    href={redirect === "/" ? "/signup" : `/signup?redirect=${encodeURIComponent(redirect)}`}
+                                    href={redirect === "/" ? "/login" : `/login?redirect=${encodeURIComponent(redirect)}`}
                                     className="text-[#FF385C] font-semibold hover:underline"
                                 >
-                                    Sign up
+                                    Sign in
                                 </Link>
                             </p>
-                        </div>
-                    </div>
-
-                    <div className="mt-6 p-4 bg-gray-100 rounded-xl">
-                        <p className="text-sm text-gray-600 font-medium mb-2">Demo accounts:</p>
-                        <div className="text-xs text-gray-500 space-y-1">
-                            <p>Email: alex.martinez@email.com</p>
-                            <p>Password: demo123</p>
                         </div>
                     </div>
                 </div>
