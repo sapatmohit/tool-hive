@@ -76,19 +76,6 @@ export default function ToolDetailsPage() {
                 message: booking.message,
                 status: "approved", // auto-approved on payment success
                 createdAt: new Date().toISOString(),
-<<<<<<< authentication
-            }, currentUser?.id ?? null);
-            setRequestSent(true);
-            setModalOpen(false);
-        } catch (error) {
-            if (error instanceof Error && error.name === "AuthenticationError") {
-                alert(error.message);
-            } else {
-                alert("Failed to send request. Please try again.");
-            }
-        } finally {
-            setRequestLoading(false);
-=======
             });
         }
     }, [currentUser, tool]);
@@ -98,7 +85,6 @@ export default function ToolDetailsPage() {
             navigator.clipboard.writeText(paymentResult.transactionId);
             setCopiedTxn(true);
             setTimeout(() => setCopiedTxn(false), 2000);
->>>>>>> main
         }
     };
 
@@ -228,15 +214,6 @@ export default function ToolDetailsPage() {
                                     </p>
                                     <p className="text-emerald-600 text-sm mt-1">Enjoy your rental!</p>
                                 </div>
-                            ) : !currentUser ? (
-                                <Button
-                                    variant="outline"
-                                    size="lg"
-                                    fullWidth
-                                    onClick={() => router.push(`/login?redirect=/tool/${tool.id}`)}
-                                >
-                                    Login to Borrow
-                                </Button>
                             ) : (
                                 <Button
                                     variant="primary"
