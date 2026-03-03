@@ -28,10 +28,11 @@ interface AvatarProps {
     src?: string | null;
     name?: string;
     size?: "xs" | "sm" | "md" | "lg" | "xl";
+    border?: boolean;
     className?: string;
 }
 
-export default function Avatar({ src, name = "", size = "md", className = "" }: AvatarProps) {
+export default function Avatar({ src, name = "", size = "md", border = false, className = "" }: AvatarProps) {
     const s = sizes[size] ?? sizes.md;
     return (
         <div
@@ -39,6 +40,7 @@ export default function Avatar({ src, name = "", size = "md", className = "" }: 
                 s.container,
                 "rounded-full overflow-hidden flex-shrink-0 relative",
                 "bg-gradient-to-br from-[#FF385C] to-[#E31C5F]",
+                border ? "border-2 border-white shadow-sm" : "",
                 className,
             ].join(" ")}
         >
