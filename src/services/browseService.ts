@@ -25,15 +25,17 @@ export async function getToolById(id: string): Promise<Tool | null> {
     return get<Tool | null>(`/tools/${id}`);
 }
 
+const MOCK_USER_LOCATION = "Mumbai, MH";
+
 /**
  * Search and filter tools.
  * @param {string} query - keyword search
- * @param {{ category?: string, available?: boolean, sort?: string }} filters
+ * @param {{ category?: string, available?: boolean, sort?: string, location?: string, userContextLocation?: string, minPrice?: number, maxPrice?: number }} filters
  * @returns {Promise<Array>}
  */
 export async function searchTools(
     query: string = "",
-    filters: { category?: string; available?: boolean; sort?: string } = {}
+    filters: { category?: string; available?: boolean; sort?: string; location?: string; userContextLocation?: string; minPrice?: number; maxPrice?: number } = {}
 ): Promise<Tool[]> {
     const tools = await get<Tool[]>("/tools");
 
@@ -56,9 +58,38 @@ export async function searchTools(
         results = results.filter((t: Tool) => t.category === filters.category);
     }
 
+    // Location filter (Geofencing)
+    if (filters.location && filters.location !== "all") {
+        const locationContext = filters.userContextLocation || MOCK_USER_LOCATION;
+        const [userCity, userState] = locationContext.split(",").map(s => s.trim().toLowerCase());
+        
+        if (filters.location === "nearby") {
+            // Filter by same city
+            results = results.filter((t: Tool) => {
+                const [toolCity] = t.location.split(",").map(s => s.trim().toLowerCase());
+                return toolCity === userCity;
+            });
+        } else if (filters.location === "state") {
+            // Filter by same state
+            results = results.filter((t: Tool) => {
+                const parts = t.location.split(",");
+                const toolState = parts.length > 1 ? parts[1].trim().toLowerCase() : "";
+                return toolState === userState;
+            });
+        }
+    }
+
     // Availability filter
     if (filters.available) {
         results = results.filter((t: Tool) => t.availability === true);
+    }
+
+    // Price filters
+    if (filters.minPrice !== undefined) {
+        results = results.filter((t: Tool) => t.pricePerDay >= filters.minPrice!);
+    }
+    if (filters.maxPrice !== undefined) {
+        results = results.filter((t: Tool) => t.pricePerDay <= filters.maxPrice!);
     }
 
     // Sort
