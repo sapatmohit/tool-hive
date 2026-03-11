@@ -14,7 +14,12 @@
  * @returns {Promise<any>}
  */
 export async function get<T = any>(endpoint: string): Promise<T> {
-    const response = await fetch(`/api${endpoint}`);
+    const isServer = typeof window === "undefined";
+    const baseUrl = isServer ? (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000") : "";
+    
+    // During build time (static generation), relative fetches fail.
+    // We prefix with baseUrl if on server.
+    const response = await fetch(`${baseUrl}/api${endpoint}`);
     if (!response.ok) {
         throw new Error(`Failed to fetch ${endpoint}: ${response.statusText}`);
     }

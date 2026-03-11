@@ -67,29 +67,21 @@ export default function ToolDetailsPage() {
 
         // Also persist the borrow request in "the system"
         if (currentUser && tool) {
-            await createRequest({
-                toolId: tool.id,
-                requesterId: currentUser.id,
-                ownerId: tool.ownerId,
-                startDate: booking.startDate,
-                endDate: booking.endDate,
-                message: booking.message,
-                status: "approved", // auto-approved on payment success
-                createdAt: new Date().toISOString(),
-<<<<<<< authentication
-            }, currentUser?.id ?? null);
-            setRequestSent(true);
-            setModalOpen(false);
-        } catch (error) {
-            if (error instanceof Error && error.name === "AuthenticationError") {
-                alert(error.message);
-            } else {
-                alert("Failed to send request. Please try again.");
+            try {
+                await createRequest({
+                    toolId: tool.id,
+                    requesterId: currentUser.id,
+                    ownerId: tool.ownerId,
+                    startDate: booking.startDate,
+                    endDate: booking.endDate,
+                    message: booking.message,
+                    status: "approved", // auto-approved on payment success
+                    createdAt: new Date().toISOString(),
+                }, currentUser.id);
+            } catch (error) {
+                console.error("Failed to create request:", error);
+                alert("Payment was successful, but we couldn't record your request. Please contact support.");
             }
-        } finally {
-            setRequestLoading(false);
-=======
-            });
         }
     }, [currentUser, tool]);
 
@@ -98,7 +90,6 @@ export default function ToolDetailsPage() {
             navigator.clipboard.writeText(paymentResult.transactionId);
             setCopiedTxn(true);
             setTimeout(() => setCopiedTxn(false), 2000);
->>>>>>> main
         }
     };
 

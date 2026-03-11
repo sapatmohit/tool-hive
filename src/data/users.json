@@ -68,5 +68,19 @@
         "bio": "Professional carpenter and avid community builder. Tools should be shared, not stored.",
         "toolsListed": 3,
         "toolsBorrowed": 3
+    },
+    {
+        "id": "user-006",
+        "name": "Test User",
+        "email": "test@gmail.com",
+        "password": "demo123",
+        "avatar": "https://randomuser.me/api/portraits/men/75.jpg",
+        "location": "Mumbai, MH",
+        "rating": 4.9,
+        "reviewCount": 52,
+        "memberSince": "2022-11-30",
+        "bio": "Professional carpenter and avid community builder. Tools should be shared, not stored.",
+        "toolsListed": 3,
+        "toolsBorrowed": 3
     }
 ]
