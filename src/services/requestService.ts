@@ -6,6 +6,19 @@
 import { get, mutate } from "@/services/apiClient";
 import { Tool, User, BorrowRequest } from "@/types";
 
+class AuthenticationError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "AuthenticationError";
+    }
+}
+
+function requireAuth(currentUserId: string | null): void {
+    if (!currentUserId) {
+        throw new AuthenticationError("Authentication required. Please log in to perform this action.");
+    }
+}
+
 /**
  * Get all incoming borrow requests for the tool owner.
  * @param {string} ownerId
@@ -52,17 +65,23 @@ export async function getBorrowedByUser(userId: string): Promise<BorrowRequest[]
  * Update the status of a borrow request.
  * @param {string} id
  * @param {'approved'|'rejected'} status
+ * @param {string} currentUserId - ID of the currently authenticated user
  * @returns {Promise<Object>}
+ * @throws {AuthenticationError} If user is not authenticated
  */
-export async function updateRequestStatus(id: string, status: "approved" | "rejected" | "pending"): Promise<BorrowRequest> {
+export async function updateRequestStatus(id: string, status: "approved" | "rejected" | "pending", currentUserId: string | null): Promise<BorrowRequest> {
+    requireAuth(currentUserId);
     return mutate<BorrowRequest>("patch", `/requests/${id}`, { id, status });
 }
 
 /**
  * Create a new borrow request.
  * @param {Object} data
+ * @param {string} currentUserId - ID of the currently authenticated user
  * @returns {Promise<Object>}
+ * @throws {AuthenticationError} If user is not authenticated
  */
-export async function createRequest(data: Partial<BorrowRequest>): Promise<BorrowRequest> {
+export async function createRequest(data: Partial<BorrowRequest>, currentUserId: string | null): Promise<BorrowRequest> {
+    requireAuth(currentUserId);
     return mutate<BorrowRequest>("post", "/requests", data);
 }
