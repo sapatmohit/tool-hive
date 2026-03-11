@@ -86,5 +86,38 @@
         "status": "approved",
         "message": "Yard clean-up this weekend! Leaf blower would be perfect.",
         "createdAt": "2026-02-29T08:00:00Z"
+    },
+    {
+        "toolId": "tool-002",
+        "requesterId": "user-001",
+        "ownerId": "user-002",
+        "startDate": "2026-03-12",
+        "endDate": "2026-03-13",
+        "message": "",
+        "status": "pending",
+        "createdAt": "2026-03-11T04:07:49.136Z",
+        "id": "req-1773202069136"
+    },
+    {
+        "toolId": "tool-001",
+        "requesterId": "user-002",
+        "ownerId": "user-001",
+        "startDate": "2026-03-12",
+        "endDate": "2026-03-13",
+        "message": "",
+        "status": "approved",
+        "createdAt": "2026-03-11T04:09:51.588Z",
+        "id": "req-1773202191588"
+    },
+    {
+        "toolId": "tool-001",
+        "requesterId": "user-002",
+        "ownerId": "user-001",
+        "startDate": "2026-03-11",
+        "endDate": "2026-03-18",
+        "message": "",
+        "status": "pending",
+        "createdAt": "2026-03-11T04:12:48.697Z",
+        "id": "req-1773202368697"
     }
 ]
