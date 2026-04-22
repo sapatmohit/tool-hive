@@ -1,11 +1,25 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useMemo } from "react";
-import defaultUsersData from "@/data/users.json";
+/**
+ * AuthContext.tsx
+ *
+ * All auth operations (login, signup, session lookup) now talk to the
+ * real REST API backed by MongoDB.  localStorage is still used only
+ * to persist the logged-in userId across page refreshes — the user
+ * object itself always comes from the DB.
+ */
+
+import {
+    createContext,
+    useContext,
+    useState,
+    useEffect,
+    useCallback,
+    useMemo,
+} from "react";
 import { User } from "@/types";
 
 const AUTH_STORAGE_KEY = "toolhive_auth_user_id";
-const LOCAL_USERS_KEY = "toolhive_local_users";
 
 interface SignupData {
     name: string;
@@ -15,151 +29,118 @@ interface SignupData {
 }
 
 interface AuthError extends Error {
-    code: "INVALID_EMAIL" | "INVALID_PASSWORD" | "EMAIL_EXISTS";
+    code: "INVALID_EMAIL" | "INVALID_PASSWORD" | "EMAIL_EXISTS" | "SERVER_ERROR";
 }
 
 interface AuthContextType {
     currentUser: User | null;
-    login: (email: string, password: string) => void;
-    signup: (data: SignupData) => void;
+    login: (email: string, password: string) => Promise<void>;
+    signup: (data: SignupData) => Promise<void>;
     logout: () => void;
     isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
 function getStoredUserId(): string | null {
     if (typeof window === "undefined") return null;
     return localStorage.getItem(AUTH_STORAGE_KEY);
 }
 
-function getLocalUsers(): User[] {
-    if (typeof window === "undefined") return [];
-    const stored = localStorage.getItem(LOCAL_USERS_KEY);
-    if (!stored) return [];
-    try {
-        return JSON.parse(stored) as User[];
-    } catch {
-        return [];
-    }
-}
-
-function saveLocalUsers(users: User[]): void {
-    if (typeof window === "undefined") return;
-    localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users));
-}
-
-function getAllUsers(): User[] {
-    const localUsers = getLocalUsers();
-    return [...defaultUsersData as User[], ...localUsers];
-}
-
-function findUserById(userId: string | null): User | null {
-    if (!userId) return null;
-    const allUsers = getAllUsers();
-    return allUsers.find((u) => u.id === userId) ?? null;
-}
-
-function findUserByEmail(email: string): User | null {
-    const allUsers = getAllUsers();
-    return allUsers.find((u) => u.email.toLowerCase() === email.toLowerCase()) ?? null;
-}
-
 function generateAvatar(name: string): string {
-    const initials = name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+    const initials = name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(initials)}&background=random&color=fff`;
 }
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [isHydrated, setIsHydrated] = useState(false);
-    const [initialUserId, setInitialUserId] = useState<string | null>(null);
+// ─── Provider ────────────────────────────────────────────────────────────────
 
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    // On mount: restore session from localStorage → fetch user from DB
     useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setInitialUserId(getStoredUserId());
-        setIsHydrated(true);
+        const storedId = getStoredUserId();
+        if (!storedId) {
+            setIsLoading(false);
+            return;
+        }
+
+        fetch(`/api/users/${storedId}`)
+            .then((res) => {
+                if (!res.ok) throw new Error("Session user not found");
+                return res.json() as Promise<User>;
+            })
+            .then((user) => setCurrentUser(user))
+            .catch(() => {
+                // Stale / deleted user — clear the stored id
+                localStorage.removeItem(AUTH_STORAGE_KEY);
+            })
+            .finally(() => setIsLoading(false));
     }, []);
 
-    const currentUser = useMemo((): User | null => {
-        return isHydrated ? findUserById(initialUserId) : null;
-    }, [initialUserId, isHydrated]);
+    const login = useCallback(async (email: string, password: string): Promise<void> => {
+        const res = await fetch(`/api/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+        });
 
-    const login = (email: string, password: string): void => {
-        const user = findUserByEmail(email);
-        
-        if (!user) {
-            const error = new Error("No account found with this email address.") as AuthError;
-            error.code = "INVALID_EMAIL";
+        const data = await res.json() as { user?: User; code?: string; error?: string };
+
+        if (!res.ok) {
+            const error = new Error(data.error ?? "Login failed") as AuthError;
+            error.code = (data.code as AuthError["code"]) ?? "SERVER_ERROR";
             throw error;
         }
 
-        if (user.password !== password) {
-            const error = new Error("Incorrect password. Please try again.") as AuthError;
-            error.code = "INVALID_PASSWORD";
+        const user = data.user!;
+        setCurrentUser(user);
+        localStorage.setItem(AUTH_STORAGE_KEY, user.id);
+    }, []);
+
+    const signup = useCallback(async (data: SignupData): Promise<void> => {
+        const res = await fetch(`/api/auth/signup`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                ...data,
+                avatar: generateAvatar(data.name),
+                memberSince: new Date().toISOString().split("T")[0],
+            }),
+        });
+
+        const body = await res.json() as { user?: User; code?: string; error?: string };
+
+        if (!res.ok) {
+            const error = new Error(body.error ?? "Signup failed") as AuthError;
+            error.code = (body.code as AuthError["code"]) ?? "SERVER_ERROR";
             throw error;
         }
 
-        setInitialUserId(user.id);
-        if (typeof window !== "undefined") {
-            localStorage.setItem(AUTH_STORAGE_KEY, user.id);
-        }
-    };
+        const user = body.user!;
+        setCurrentUser(user);
+        localStorage.setItem(AUTH_STORAGE_KEY, user.id);
+    }, []);
 
-    const signup = (data: SignupData): void => {
-        const existingUser = findUserByEmail(data.email);
-        
-        if (existingUser) {
-            const error = new Error("An account with this email already exists.") as AuthError;
-            error.code = "EMAIL_EXISTS";
-            throw error;
-        }
-
-        const localUsers = getLocalUsers();
-        const newUser: User = {
-            id: `user-${crypto.randomUUID()}`,
-            name: data.name,
-            email: data.email,
-            password: data.password,
-            avatar: generateAvatar(data.name),
-            location: data.location || "",
-            rating: 0,
-            reviewCount: 0,
-            bio: "",
-            memberSince: new Date().toISOString(),
-        };
-
-        const updatedLocalUsers = [...localUsers, newUser];
-        saveLocalUsers(updatedLocalUsers);
-
-        setInitialUserId(newUser.id);
-        if (typeof window !== "undefined") {
-            localStorage.setItem(AUTH_STORAGE_KEY, newUser.id);
-        }
-    };
-
-    const logout = (): void => {
-        setInitialUserId(null);
-        if (typeof window !== "undefined") {
-            localStorage.removeItem(AUTH_STORAGE_KEY);
-        }
-    };
+    const logout = useCallback((): void => {
+        setCurrentUser(null);
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+    }, []);
 
     const value = useMemo(
-        () => ({
-            currentUser,
-            login,
-            signup,
-            logout,
-            isLoading: !isHydrated,
-        }),
-        [currentUser, isHydrated]
+        () => ({ currentUser, login, signup, logout, isLoading }),
+        [currentUser, login, signup, logout, isLoading]
     );
 
-    return (
-        <AuthContext.Provider value={value}>
-            {children}
-        </AuthContext.Provider>
-    );
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 /**

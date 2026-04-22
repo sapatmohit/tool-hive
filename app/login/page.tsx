@@ -33,7 +33,7 @@ function LoginForm() {
         setSubmitting(true);
 
         try {
-            login(email, password);
+            await login(email, password);
             router.push(redirect);
         } catch (err) {
             if (err instanceof Error) {

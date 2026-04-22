@@ -62,7 +62,7 @@ function SignupForm() {
         setSubmitting(true);
 
         try {
-            signup({
+            await signup({
                 name: name.trim(),
                 email: email.trim().toLowerCase(),
                 password,

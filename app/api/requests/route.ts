@@ -1,24 +1,17 @@
 import { NextResponse } from "next/server";
-import { readData, addItem } from "@/lib/db";
+import { addItem, findRequests } from "@/lib/db";
 import { BorrowRequest } from "@/types";
 
 export async function GET(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
-        const ownerId = searchParams.get("ownerId");
-        const requesterId = searchParams.get("requesterId");
+        const ownerId = searchParams.get("ownerId") ?? undefined;
+        const requesterId = searchParams.get("requesterId") ?? undefined;
 
-        let requests = await readData<BorrowRequest>("requests");
-
-        if (ownerId) {
-            requests = requests.filter((r) => r.ownerId === ownerId);
-        }
-        if (requesterId) {
-            requests = requests.filter((r) => r.requesterId === requesterId);
-        }
-
+        const requests = await findRequests({ ownerId, requesterId });
         return NextResponse.json(requests);
     } catch (error) {
+        console.error("GET /api/requests error:", error);
         return NextResponse.json({ error: "Failed to fetch requests" }, { status: 500 });
     }
 }
@@ -35,6 +28,7 @@ export async function POST(request: Request) {
         const savedRequest = await addItem<BorrowRequest>("requests", newRequest);
         return NextResponse.json(savedRequest, { status: 201 });
     } catch (error) {
+        console.error("POST /api/requests error:", error);
         return NextResponse.json({ error: "Failed to create request" }, { status: 500 });
     }
 }
