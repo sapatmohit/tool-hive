@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { getItemById, updateItem, deleteItem } from "@/lib/db";
 import { User } from "@/types";
+import { userSchema } from "@/lib/schemas";
+
+const partialUserSchema = userSchema.partial();
 
 export async function GET(
     request: Request,
@@ -22,18 +25,34 @@ export async function PATCH(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params;
     try {
-        const { id } = await params;
         const body = await request.json();
-        const updatedUser = await updateItem<User>("users", id, body);
+
+        // Validate partial update
+        const result = partialUserSchema.safeParse(body);
+        if (!result.success) {
+            return NextResponse.json(
+                { 
+                    error: result.error.issues[0].message, 
+                    code: "VALIDATION_ERROR",
+                    details: result.error.issues 
+                },
+                { status: 400 }
+            );
+        }
+
+        const updatedUser = await updateItem<User>("users", id, result.data);
         if (!updatedUser) {
             return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
         return NextResponse.json(updatedUser);
     } catch (error) {
+        console.error(`PATCH /api/users/${id} error:`, error);
         return NextResponse.json({ error: "Failed to update user" }, { status: 500 });
     }
 }
+
 
 export async function DELETE(
     request: Request,

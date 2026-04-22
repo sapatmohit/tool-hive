@@ -18,6 +18,7 @@ function BrowseContent() {
     const initialQ = searchParams.get("q") ?? "";
 
     const [tools, setTools] = useState<Tool[]>([]);
+    const [totalTools, setTotalTools] = useState(0);
     const [categories, setCategories] = useState<string[]>(["All"]);
     const [loading, setLoading] = useState(true);
     const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
@@ -33,25 +34,32 @@ function BrowseContent() {
     const [query, setQuery] = useState(initialQ);
     const [userLocation, setUserLocation] = useState<string>("");
     const [isLocating, setIsLocating] = useState(false);
+    const [page, setPage] = useState(1);
+    const PAGE_SIZE = 9;
 
-    const load = useCallback(async (q: string, f: any) => {
+    const load = useCallback(async (q: string, f: any, p: number) => {
         setLoading(true);
         try {
             const [results, cats] = await Promise.all([
-                searchTools(q, f),
+                searchTools(q, { ...f, page: p, limit: PAGE_SIZE }),
                 getCategories(),
             ]);
-            setTools(results);
+            setTools(results.tools);
+            setTotalTools(results.total);
             setCategories(cats);
         } finally {
             setLoading(false);
         }
     }, []);
 
-    useEffect(() => { load(query, filters); }, [query, filters, load]);
+    useEffect(() => { 
+        load(query, filters, page); 
+    }, [query, filters, page, load]);
 
-    const handleSearch = (q: string) => { setQuery(q); };
-    
+    const handleSearch = (q: string) => { 
+        setQuery(q); 
+        setPage(1); // Reset to first page on search
+    };
     const getUserLocationString = async (): Promise<string> => {
         return new Promise((resolve, reject) => {
             if (!navigator.geolocation) {
@@ -77,6 +85,7 @@ function BrowseContent() {
     };
 
     const handleFilter = async (f: FilterState) => {
+        setPage(1);
         if ((f.location === "nearby" || f.location === "state") && !userLocation) {
             setIsLocating(true);
             try {
@@ -96,6 +105,7 @@ function BrowseContent() {
     };
 
     const handleClearFilters = () => {
+        setPage(1);
         setFilters({
             category: "All",
             available: false,
@@ -107,12 +117,15 @@ function BrowseContent() {
         });
     };
 
+    const totalPages = Math.ceil(totalTools / PAGE_SIZE);
+
     const sortOptions = [
         { value: "default", label: "Recommended" },
         { value: "price_asc", label: "Price: Low → High" },
         { value: "price_desc", label: "Price: High → Low" },
         { value: "rating", label: "Top Rated" },
     ];
+
 
     return (
         <div className="min-h-screen bg-gray-50 pb-20">
@@ -123,7 +136,7 @@ function BrowseContent() {
                         Find tools near you
                     </h1>
                     <p className="text-gray-500 mb-6">
-                        Browse {tools.length > 0 ? tools.length : "…"} tools available from your neighbors
+                        Browse {totalTools > 0 ? totalTools : "…"} tools available from your neighbors
                     </p>
                     <div className="max-w-2xl">
                         <SearchBar onSearch={handleSearch} initialQuery={query} />
@@ -227,11 +240,39 @@ function BrowseContent() {
                                 description="Try adjusting your search or filters to find what you're looking for."
                             />
                         ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {tools.map((tool) => (
-                                    <ToolCard key={tool.id} tool={tool} />
-                                ))}
-                            </div>
+                            <>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {tools.map((tool) => (
+                                        <ToolCard key={tool.id} tool={tool} />
+                                    ))}
+                                </div>
+                                
+                                {totalPages > 1 && (
+                                    <div className="mt-12 flex justify-center items-center gap-4">
+                                        <button
+                                            onClick={() => setPage(p => Math.max(1, p - 1))}
+                                            disabled={page === 1}
+                                            className="px-6 py-2.5 bg-white border-2 border-gray-100 rounded-xl font-bold text-gray-700
+                                            hover:border-[#FF385C] hover:text-[#FF385C] disabled:opacity-50 disabled:hover:border-gray-100 
+                                            disabled:hover:text-gray-700 transition-all shadow-sm"
+                                        >
+                                            Previous
+                                        </button>
+                                        <span className="text-sm font-bold text-gray-500">
+                                            Page <span className="text-gray-900">{page}</span> of {totalPages}
+                                        </span>
+                                        <button
+                                            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                            disabled={page === totalPages}
+                                            className="px-6 py-2.5 bg-white border-2 border-gray-100 rounded-xl font-bold text-gray-700
+                                            hover:border-[#FF385C] hover:text-[#FF385C] disabled:opacity-50 disabled:hover:border-gray-100 
+                                            disabled:hover:text-gray-700 transition-all shadow-sm"
+                                        >
+                                            Next
+                                        </button>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
                 </div>

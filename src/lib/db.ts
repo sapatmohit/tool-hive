@@ -13,17 +13,29 @@ import { connectToDatabase } from "./mongodb";
 import ToolModel from "@/models/Tool";
 import UserModel from "@/models/User";
 import BorrowRequestModel from "@/models/BorrowRequest";
-import type { Tool, User, BorrowRequest } from "@/types";
+import ReviewModel from "@/models/Review";
+import MessageModel from "@/models/Message";
+import NotificationModel from "@/models/Notification";
+import type { Tool, User, BorrowRequest, Review, Message, Notification } from "@/types";
 
 // ─── Collection → Model map ─────────────────────────────────────────────────
 
-type CollectionName = "tools" | "users" | "requests";
+type CollectionName = "tools" | "users" | "requests" | "reviews" | "messages" | "notifications";
+
+const MODEL_MAP = {
+    tools: ToolModel,
+    users: UserModel,
+    requests: BorrowRequestModel,
+    reviews: ReviewModel,
+    messages: MessageModel,
+    notifications: NotificationModel,
+};
 
 // ─── Serialisation helpers ───────────────────────────────────────────────────
 
 /** Convert a Mongoose Tool document → plain Tool (using toolId as "id"). */
-function serializeTool(doc: InstanceType<typeof ToolModel>): Tool {
-    const obj = doc.toObject({ versionKey: false });
+function serializeTool(doc: any): Tool {
+    const obj = doc.toObject ? doc.toObject({ versionKey: false }) : doc;
     return {
         id: obj.toolId,
         name: obj.name,
@@ -40,8 +52,8 @@ function serializeTool(doc: InstanceType<typeof ToolModel>): Tool {
 }
 
 /** Convert a Mongoose User document → plain User (using userId as "id"). */
-function serializeUser(doc: InstanceType<typeof UserModel>): User {
-    const obj = doc.toObject({ versionKey: false });
+function serializeUser(doc: any): User {
+    const obj = doc.toObject ? doc.toObject({ versionKey: false }) : doc;
     return {
         id: obj.userId,
         name: obj.name,
@@ -56,11 +68,8 @@ function serializeUser(doc: InstanceType<typeof UserModel>): User {
     };
 }
 
-/** Convert a Mongoose BorrowRequest document → plain BorrowRequest. */
-function serializeRequest(
-    doc: InstanceType<typeof BorrowRequestModel>
-): BorrowRequest {
-    const obj = doc.toObject({ versionKey: false });
+function serializeRequest(doc: any): BorrowRequest {
+    const obj = doc.toObject ? doc.toObject({ versionKey: false }) : doc;
     return {
         id: obj.requestId,
         toolId: obj.toolId,
@@ -76,23 +85,84 @@ function serializeRequest(
     };
 }
 
+/** Convert a Mongoose Review document → plain Review. */
+function serializeReview(doc: any): Review {
+    const obj = doc.toObject ? doc.toObject({ versionKey: false }) : doc;
+    return {
+        id: obj.reviewId,
+        targetId: obj.targetId,
+        targetType: obj.targetType,
+        authorId: obj.authorId,
+        rating: obj.rating,
+        comment: obj.comment,
+        createdAt: obj.createdAt
+            ? new Date(obj.createdAt).toISOString()
+            : new Date().toISOString(),
+    };
+}
+
+/** Convert a Mongoose Message document → plain Message. */
+function serializeMessage(doc: any): Message {
+    const obj = doc.toObject ? doc.toObject({ versionKey: false }) : doc;
+    return {
+        id: obj.messageId,
+        senderId: obj.senderId,
+        receiverId: obj.receiverId,
+        content: obj.content,
+        read: obj.read,
+        createdAt: obj.createdAt
+            ? new Date(obj.createdAt).toISOString()
+            : new Date().toISOString(),
+    };
+}
+
+/** Convert a Mongoose Notification document → plain Notification. */
+function serializeNotification(doc: any): Notification {
+    const obj = doc.toObject ? doc.toObject({ versionKey: false }) : doc;
+    return {
+        id: obj.notificationId,
+        userId: obj.userId,
+        type: obj.type,
+        title: obj.title,
+        message: obj.message,
+        link: obj.link,
+        read: obj.read,
+        createdAt: obj.createdAt
+            ? new Date(obj.createdAt).toISOString()
+            : new Date().toISOString(),
+    };
+}
+
+function serialize(collection: CollectionName, doc: any) {
+    if (!doc) return null;
+    switch (collection) {
+        case "tools": return serializeTool(doc);
+        case "users": return serializeUser(doc);
+        case "requests": return serializeRequest(doc);
+        case "reviews": return serializeReview(doc);
+        case "messages": return serializeMessage(doc);
+        case "notifications": return serializeNotification(doc);
+    }
+}
+
+function getQueryField(collection: CollectionName) {
+    switch (collection) {
+        case "tools": return "toolId";
+        case "users": return "userId";
+        case "requests": return "requestId";
+        case "reviews": return "reviewId";
+        case "messages": return "messageId";
+        case "notifications": return "notificationId";
+    }
+}
+
 // ─── Public API ──────────────────────────────────────────────────────────────
 
 export async function readData<T>(collection: CollectionName): Promise<T[]> {
     await connectToDatabase();
-    if (collection === "tools") {
-        const docs = await ToolModel.find({}).lean(false);
-        return docs.map(serializeTool) as unknown as T[];
-    }
-    if (collection === "users") {
-        const docs = await UserModel.find({}).lean(false);
-        return docs.map(serializeUser) as unknown as T[];
-    }
-    if (collection === "requests") {
-        const docs = await BorrowRequestModel.find({}).lean(false);
-        return docs.map(serializeRequest) as unknown as T[];
-    }
-    return [];
+    const Model = MODEL_MAP[collection] as any;
+    const docs = await Model.find({}).lean(false);
+    return docs.map((doc: any) => serialize(collection, doc)) as unknown as T[];
 }
 
 export async function getItemById<T extends { id: string }>(
@@ -100,19 +170,10 @@ export async function getItemById<T extends { id: string }>(
     id: string
 ): Promise<T | null> {
     await connectToDatabase();
-    if (collection === "tools") {
-        const doc = await ToolModel.findOne({ toolId: id });
-        return doc ? (serializeTool(doc) as unknown as T) : null;
-    }
-    if (collection === "users") {
-        const doc = await UserModel.findOne({ userId: id });
-        return doc ? (serializeUser(doc) as unknown as T) : null;
-    }
-    if (collection === "requests") {
-        const doc = await BorrowRequestModel.findOne({ requestId: id });
-        return doc ? (serializeRequest(doc) as unknown as T) : null;
-    }
-    return null;
+    const Model = MODEL_MAP[collection] as any;
+    const field = getQueryField(collection);
+    const doc = await Model.findOne({ [field]: id });
+    return serialize(collection, doc) as unknown as T | null;
 }
 
 export async function addItem<T extends { id: string }>(
@@ -120,54 +181,14 @@ export async function addItem<T extends { id: string }>(
     item: T
 ): Promise<T> {
     await connectToDatabase();
-    if (collection === "tools") {
-        const toolItem = item as unknown as Tool;
-        const doc = await ToolModel.create({
-            toolId: toolItem.id,
-            name: toolItem.name,
-            description: toolItem.description,
-            category: toolItem.category,
-            location: toolItem.location,
-            availability: toolItem.availability,
-            ownerId: toolItem.ownerId,
-            pricePerDay: toolItem.pricePerDay,
-            image: toolItem.image,
-            rating: toolItem.rating,
-            reviewCount: toolItem.reviewCount,
-        });
-        return serializeTool(doc) as unknown as T;
-    }
-    if (collection === "users") {
-        const userItem = item as unknown as User;
-        const doc = await UserModel.create({
-            userId: userItem.id,
-            name: userItem.name,
-            email: userItem.email,
-            password: userItem.password,
-            avatar: userItem.avatar,
-            location: userItem.location,
-            rating: userItem.rating,
-            reviewCount: userItem.reviewCount,
-            bio: userItem.bio,
-            memberSince: userItem.memberSince,
-        });
-        return serializeUser(doc) as unknown as T;
-    }
-    if (collection === "requests") {
-        const reqItem = item as unknown as BorrowRequest;
-        const doc = await BorrowRequestModel.create({
-            requestId: reqItem.id,
-            toolId: reqItem.toolId,
-            requesterId: reqItem.requesterId,
-            ownerId: reqItem.ownerId,
-            startDate: reqItem.startDate,
-            endDate: reqItem.endDate,
-            message: reqItem.message,
-            status: reqItem.status,
-        });
-        return serializeRequest(doc) as unknown as T;
-    }
-    throw new Error(`Unknown collection: ${collection}`);
+    const Model = MODEL_MAP[collection] as any;
+    const field = getQueryField(collection);
+    
+    // Convert 'id' to the internal field name (e.g., 'toolId')
+    const { id, ...rest } = item;
+    const doc = await Model.create({ [field]: id, ...rest });
+    
+    return serialize(collection, doc) as unknown as T;
 }
 
 export async function updateItem<T extends { id: string }>(
@@ -176,36 +197,17 @@ export async function updateItem<T extends { id: string }>(
     updates: Partial<T>
 ): Promise<T | null> {
     await connectToDatabase();
-    if (collection === "tools") {
-        const { id: _id, ...rest } = updates as Partial<Tool> & { id?: string };
-        const doc = await ToolModel.findOneAndUpdate(
-            { toolId: id },
-            { $set: rest },
-            { new: true }
-        );
-        return doc ? (serializeTool(doc) as unknown as T) : null;
-    }
-    if (collection === "users") {
-        const { id: _id, ...rest } = updates as Partial<User> & { id?: string };
-        const doc = await UserModel.findOneAndUpdate(
-            { userId: id },
-            { $set: rest },
-            { new: true }
-        );
-        return doc ? (serializeUser(doc) as unknown as T) : null;
-    }
-    if (collection === "requests") {
-        const { id: _id, ...rest } = updates as Partial<BorrowRequest> & {
-            id?: string;
-        };
-        const doc = await BorrowRequestModel.findOneAndUpdate(
-            { requestId: id },
-            { $set: rest },
-            { new: true }
-        );
-        return doc ? (serializeRequest(doc) as unknown as T) : null;
-    }
-    return null;
+    const Model = MODEL_MAP[collection] as any;
+    const field = getQueryField(collection);
+    
+    const { id: _id, ...rest } = updates;
+    const doc = await Model.findOneAndUpdate(
+        { [field]: id },
+        { $set: rest },
+        { new: true }
+    );
+    
+    return serialize(collection, doc) as unknown as T | null;
 }
 
 export async function deleteItem(
@@ -213,19 +215,10 @@ export async function deleteItem(
     id: string
 ): Promise<boolean> {
     await connectToDatabase();
-    if (collection === "tools") {
-        const result = await ToolModel.deleteOne({ toolId: id });
-        return result.deletedCount > 0;
-    }
-    if (collection === "users") {
-        const result = await UserModel.deleteOne({ userId: id });
-        return result.deletedCount > 0;
-    }
-    if (collection === "requests") {
-        const result = await BorrowRequestModel.deleteOne({ requestId: id });
-        return result.deletedCount > 0;
-    }
-    return false;
+    const Model = MODEL_MAP[collection] as any;
+    const field = getQueryField(collection);
+    const result = await Model.deleteOne({ [field]: id });
+    return result.deletedCount > 0;
 }
 
 /**
@@ -234,10 +227,112 @@ export async function deleteItem(
 export async function findUserByEmail(email: string): Promise<User | null> {
     await connectToDatabase();
     const doc = await UserModel.findOne({ email });
-    return doc ? serializeUser(doc) : null;
+    return serializeUser(doc);
 }
 
 /**
+ * Find tools with advanced filtering, sorting, and pagination.
+ */
+export async function findTools(options: {
+    query?: string;
+    category?: string;
+    available?: boolean;
+    sort?: string;
+    location?: string;
+    userContextLocation?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    lat?: number;
+    lng?: number;
+    radius?: number; // in km
+    page?: number;
+    limit?: number;
+}): Promise<{ tools: Tool[]; total: number }> {
+    await connectToDatabase();
+    
+    const { 
+        query, category, available, sort, location, 
+        userContextLocation, minPrice, maxPrice, 
+        lat, lng, radius,
+        page = 1, limit = 20 
+    } = options;
+
+    const mongoQuery: any = {};
+
+    // Keyword search
+    if (query) {
+        mongoQuery.$or = [
+            { name: { $regex: query, $options: "i" } },
+            { description: { $regex: query, $options: "i" } },
+            { category: { $regex: query, $options: "i" } },
+            { location: { $regex: query, $options: "i" } },
+        ];
+    }
+
+    // Category filter
+    if (category && category !== "All") {
+        mongoQuery.category = category;
+    }
+
+    // Availability filter
+    if (available) {
+        mongoQuery.availability = true;
+    }
+
+    // Price range
+    if (minPrice !== undefined || maxPrice !== undefined) {
+        mongoQuery.pricePerDay = {};
+        if (minPrice !== undefined) mongoQuery.pricePerDay.$gte = minPrice;
+        if (maxPrice !== undefined) mongoQuery.pricePerDay.$lte = maxPrice;
+    }
+
+    // Location filter (Geofencing simulation)
+    if (location && location !== "all") {
+        const locationContext = userContextLocation || "Mumbai, MH";
+        const [userCity, userState] = locationContext.split(",").map(s => s.trim().toLowerCase());
+        
+        if (location === "nearby") {
+            mongoQuery.location = { $regex: `^${userCity}`, $options: "i" };
+        } else if (location === "state") {
+            mongoQuery.location = { $regex: `${userState}$`, $options: "i" };
+        }
+    }
+
+    // Geo-spatial search
+    if (options.lat !== undefined && options.lng !== undefined && options.radius !== undefined) {
+        mongoQuery.coordinates = {
+            $near: {
+                $geometry: {
+                    type: "Point",
+                    coordinates: [options.lng, options.lat]
+                },
+                $maxDistance: options.radius * 1000 // radius in km to meters
+            }
+        };
+    }
+
+    // Sort options
+    let sortOption: any = { createdAt: -1 };
+    if (sort === "price_asc") sortOption = { pricePerDay: 1 };
+    else if (sort === "price_desc") sortOption = { pricePerDay: -1 };
+    else if (sort === "rating") sortOption = { rating: -1 };
+
+    const skip = (page - 1) * limit;
+
+    const [docs, total] = await Promise.all([
+        ToolModel.find(mongoQuery)
+            .sort(sortOption)
+            .skip(skip)
+            .limit(limit)
+            .lean(false),
+        ToolModel.countDocuments(mongoQuery)
+    ]);
+
+    return {
+        tools: docs.map(serializeTool),
+        total
+    };
+}/**
  * Find requests filtered by ownerId and/or requesterId.
  */
 export async function findRequests(filters: {
@@ -245,9 +340,46 @@ export async function findRequests(filters: {
     requesterId?: string;
 }): Promise<BorrowRequest[]> {
     await connectToDatabase();
-    const query: Record<string, string> = {};
+    const query: any = {};
     if (filters.ownerId) query.ownerId = filters.ownerId;
     if (filters.requesterId) query.requesterId = filters.requesterId;
     const docs = await BorrowRequestModel.find(query);
     return docs.map(serializeRequest);
+}
+
+/**
+ * Find reviews for a specific target (tool or user).
+ */
+export async function findReviews(filters: {
+    targetId?: string;
+    targetType?: "tool" | "user";
+    authorId?: string;
+}): Promise<Review[]> {
+    await connectToDatabase();
+    const query: any = {};
+    if (filters.targetId) query.targetId = filters.targetId;
+    if (filters.targetType) query.targetType = filters.targetType;
+    if (filters.authorId) query.authorId = filters.authorId;
+    
+    const docs = await ReviewModel.find(query).sort({ createdAt: -1 });
+    return docs.map(serializeReview);
+}
+
+/**
+ * Recalculate and update the average rating for a tool or user.
+ */
+export async function updateTargetRating(targetId: string, targetType: "tool" | "user") {
+    await connectToDatabase();
+    const reviews = await findReviews({ targetId, targetType });
+    
+    if (reviews.length === 0) return;
+
+    const totalRating = reviews.reduce((sum, rev) => sum + rev.rating, 0);
+    const averageRating = totalRating / reviews.length;
+    
+    const collection = targetType === "tool" ? "tools" : "users";
+    await updateItem(collection, targetId, {
+        rating: Number(averageRating.toFixed(1)),
+        reviewCount: reviews.length
+    } as any);
 }

@@ -17,6 +17,10 @@ export interface IBorrowRequest extends Document {
     endDate: string;
     message?: string;
     status: RequestStatus;
+    securityDeposit?: {
+        amount: number;
+        status: "pending" | "held" | "released" | "claimed";
+    };
     createdAt: Date;
 }
 
@@ -34,6 +38,10 @@ const BorrowRequestSchema = new Schema<IBorrowRequest>(
             enum: ["pending", "approved", "rejected"],
             default: "pending",
         },
+        securityDeposit: {
+            amount: { type: Number, default: 0 },
+            status: { type: String, enum: ["pending", "held", "released", "claimed"], default: "pending" }
+        }
     },
     { timestamps: true }
 );

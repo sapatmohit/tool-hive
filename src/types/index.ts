@@ -43,3 +43,31 @@ export interface BorrowRequest {
     requester?: User;
     owner?: User;
 }
+export interface Review {
+    id: string;
+    targetId: string; // toolId or userId
+    targetType: "tool" | "user";
+    authorId: string;
+    rating: number;
+    comment: string;
+    createdAt: string;
+    author?: User;
+}
+export interface Message {
+    id: string;
+    senderId: string;
+    receiverId: string;
+    content: string;
+    read: boolean;
+    createdAt: string;
+}
+export interface Notification {
+    id: string;
+    userId: string;
+    type: "request" | "message" | "system";
+    title: string;
+    message: string;
+    link?: string;
+    read: boolean;
+    createdAt: string;
+}

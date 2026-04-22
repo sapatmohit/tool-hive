@@ -13,6 +13,7 @@ import "dotenv/config"; // picks up .env.local automatically via dotenv
 import mongoose from "mongoose";
 import { readFileSync } from "fs";
 import { join } from "path";
+import bcrypt from "bcryptjs";
 
 // ─── Load seed data ──────────────────────────────────────────────────────────
 
@@ -23,60 +24,9 @@ function loadJson<T>(filename: string): T[] {
     return JSON.parse(raw) as T[];
 }
 
-// ─── Inline schemas (avoids Next.js module-resolution headaches) ─────────────
-
-const ToolSchema = new mongoose.Schema(
-    {
-        toolId: { type: String, required: true, unique: true },
-        name: String,
-        description: String,
-        category: String,
-        location: String,
-        availability: { type: Boolean, default: true },
-        ownerId: String,
-        pricePerDay: Number,
-        image: String,
-        rating: { type: Number, default: 0 },
-        reviewCount: { type: Number, default: 0 },
-    },
-    { timestamps: true }
-);
-
-const UserSchema = new mongoose.Schema(
-    {
-        userId: { type: String, required: true, unique: true },
-        name: String,
-        email: { type: String, unique: true },
-        password: String,
-        avatar: String,
-        location: String,
-        rating: { type: Number, default: 0 },
-        reviewCount: { type: Number, default: 0 },
-        bio: String,
-        memberSince: String,
-        toolsListed: { type: Number, default: 0 },
-        toolsBorrowed: { type: Number, default: 0 },
-    },
-    { timestamps: true }
-);
-
-const BorrowRequestSchema = new mongoose.Schema(
-    {
-        requestId: { type: String, required: true, unique: true },
-        toolId: String,
-        requesterId: String,
-        ownerId: String,
-        startDate: String,
-        endDate: String,
-        message: String,
-        status: {
-            type: String,
-            enum: ["pending", "approved", "rejected"],
-            default: "pending",
-        },
-    },
-    { timestamps: true }
-);
+import ToolModel from "@/models/Tool";
+import UserModel from "@/models/User";
+import BorrowRequestModel from "@/models/BorrowRequest";
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
@@ -91,20 +41,12 @@ async function seed() {
     await mongoose.connect(uri);
     console.log("✅  Connected.\n");
 
-    const ToolModel =
-        mongoose.models.Tool || mongoose.model("Tool", ToolSchema);
-    const UserModel =
-        mongoose.models.User || mongoose.model("User", UserSchema);
-    const BorrowRequestModel =
-        mongoose.models.BorrowRequest ||
-        mongoose.model("BorrowRequest", BorrowRequestSchema);
-
     // ── Tools ──
     const tools = loadJson<Record<string, unknown>>("tools.json");
     console.log(`📦  Seeding ${tools.length} tools…`);
     for (const tool of tools) {
         await ToolModel.updateOne(
-            { toolId: tool.id },
+            { toolId: tool.id as string },
             {
                 $setOnInsert: {
                     toolId: tool.id,
@@ -126,17 +68,22 @@ async function seed() {
     console.log("   ✔ Tools done.\n");
 
     // ── Users ──
-    const users = loadJson<Record<string, unknown>>("users.json");
+    const users = loadJson<Record<string, any>>("users.json");
     console.log(`👤  Seeding ${users.length} users…`);
     for (const user of users) {
+        // Hash password if it's a plain string (all seed users have plain text passwords)
+        const hashedPassword = await bcrypt.hash(user.password || "password123", 12);
+        
         await UserModel.updateOne(
-            { userId: user.id },
+            { userId: user.id as string },
             {
+                $set: {
+                    password: hashedPassword,
+                },
                 $setOnInsert: {
                     userId: user.id,
                     name: user.name,
                     email: user.email,
-                    password: user.password,
                     avatar: user.avatar,
                     location: user.location,
                     rating: user.rating,
@@ -157,7 +104,7 @@ async function seed() {
     console.log(`📋  Seeding ${requests.length} borrow requests…`);
     for (const req of requests) {
         await BorrowRequestModel.updateOne(
-            { requestId: req.id },
+            { requestId: req.id as string },
             {
                 $setOnInsert: {
                     requestId: req.id,

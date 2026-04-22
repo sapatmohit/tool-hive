@@ -28,81 +28,37 @@ export async function getToolById(id: string): Promise<Tool | null> {
 const MOCK_USER_LOCATION = "Mumbai, MH";
 
 /**
- * Search and filter tools.
- * @param {string} query - keyword search
- * @param {{ category?: string, available?: boolean, sort?: string, location?: string, userContextLocation?: string, minPrice?: number, maxPrice?: number }} filters
- * @returns {Promise<Array>}
+ * Search and filter tools using server-side capabilities.
  */
 export async function searchTools(
     query: string = "",
-    filters: { category?: string; available?: boolean; sort?: string; location?: string; userContextLocation?: string; minPrice?: number; maxPrice?: number } = {}
-): Promise<Tool[]> {
-    const tools = await get<Tool[]>("/tools");
+    filters: { 
+        category?: string; 
+        available?: boolean; 
+        sort?: string; 
+        location?: string; 
+        userContextLocation?: string; 
+        minPrice?: number; 
+        maxPrice?: number;
+        page?: number;
+        limit?: number;
+    } = {}
+): Promise<{ tools: Tool[]; total: number }> {
+    const params = new URLSearchParams();
+    if (query) params.append("q", query);
+    if (filters.category) params.append("category", filters.category);
+    if (filters.available) params.append("available", "true");
+    if (filters.sort) params.append("sort", filters.sort);
+    if (filters.location) params.append("location", filters.location);
+    if (filters.userContextLocation) params.append("userContextLocation", filters.userContextLocation);
+    if (filters.minPrice !== undefined) params.append("minPrice", filters.minPrice.toString());
+    if (filters.maxPrice !== undefined) params.append("maxPrice", filters.maxPrice.toString());
+    if (filters.page) params.append("page", filters.page.toString());
+    if (filters.limit) params.append("limit", filters.limit.toString());
 
-    let results = tools;
-
-    // Keyword filter
-    if (query.trim()) {
-        const q = query.toLowerCase();
-        results = results.filter(
-            (t: Tool) =>
-                t.name.toLowerCase().includes(q) ||
-                t.description.toLowerCase().includes(q) ||
-                t.category.toLowerCase().includes(q) ||
-                t.location.toLowerCase().includes(q)
-        );
-    }
-
-    // Category filter
-    if (filters.category && filters.category !== "All") {
-        results = results.filter((t: Tool) => t.category === filters.category);
-    }
-
-    // Location filter (Geofencing)
-    if (filters.location && filters.location !== "all") {
-        const locationContext = filters.userContextLocation || MOCK_USER_LOCATION;
-        const [userCity, userState] = locationContext.split(",").map(s => s.trim().toLowerCase());
-        
-        if (filters.location === "nearby") {
-            // Filter by same city
-            results = results.filter((t: Tool) => {
-                const [toolCity] = t.location.split(",").map(s => s.trim().toLowerCase());
-                return toolCity === userCity;
-            });
-        } else if (filters.location === "state") {
-            // Filter by same state
-            results = results.filter((t: Tool) => {
-                const parts = t.location.split(",");
-                const toolState = parts.length > 1 ? parts[1].trim().toLowerCase() : "";
-                return toolState === userState;
-            });
-        }
-    }
-
-    // Availability filter
-    if (filters.available) {
-        results = results.filter((t: Tool) => t.availability === true);
-    }
-
-    // Price filters
-    if (filters.minPrice !== undefined) {
-        results = results.filter((t: Tool) => t.pricePerDay >= filters.minPrice!);
-    }
-    if (filters.maxPrice !== undefined) {
-        results = results.filter((t: Tool) => t.pricePerDay <= filters.maxPrice!);
-    }
-
-    // Sort
-    if (filters.sort === "price_asc") {
-        results = [...results].sort((a, b) => a.pricePerDay - b.pricePerDay);
-    } else if (filters.sort === "price_desc") {
-        results = [...results].sort((a, b) => b.pricePerDay - a.pricePerDay);
-    } else if (filters.sort === "rating") {
-        results = [...results].sort((a, b) => b.rating - a.rating);
-    }
-
-    return results;
+    return get<{ tools: Tool[]; total: number }>(`/tools?${params.toString()}`);
 }
+
 
 /**
  * Get all unique categories from tools.

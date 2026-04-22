@@ -23,7 +23,7 @@ const navLinks = [
 
 export default function Navbar() {
     const pathname = usePathname();
-    const { currentUser } = useAuth();
+    const { currentUser, logout } = useAuth();
     const [mobileOpen, setMobileOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
 
@@ -94,20 +94,60 @@ export default function Navbar() {
                         {/* Divider */}
                         <div className="w-px h-6 bg-gray-200 mx-2" />
 
-                        {/* Profile */}
-                        <Link
-                            href="/borrowed"
-                            className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-gray-200
-                         hover:border-gray-300 hover:shadow-md transition-all duration-200 cursor-pointer"
-                            title={currentUser?.name}
-                        >
-                            <IoMenuOutline className="text-gray-500 text-xl" />
-                            <Avatar
-                                src={currentUser?.avatar}
-                                name={currentUser?.name}
-                                size="sm"
-                            />
-                        </Link>
+                        {/* Profile Dropdown */}
+                        <div className="relative group">
+                            <button
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-gray-200
+                                hover:border-gray-300 hover:shadow-md transition-all duration-200 cursor-pointer bg-white"
+                            >
+                                <IoMenuOutline className="text-gray-500 text-xl" />
+                                <Avatar
+                                    src={currentUser?.avatar}
+                                    name={currentUser?.name}
+                                    size="sm"
+                                />
+                            </button>
+
+                            {/* Dropdown Menu (Hover-based or Click-based) */}
+                            <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 
+                                opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 
+                                z-50 py-2 overflow-hidden transform origin-top-right group-hover:translate-y-0 translate-y-2">
+                                
+                                {currentUser ? (
+                                    <>
+                                        <div className="px-4 py-3 border-b border-gray-50 mb-1">
+                                            <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">Signed in as</p>
+                                            <p className="text-sm font-bold text-gray-900 truncate">{currentUser.name}</p>
+                                        </div>
+                                        <Link href="/my-tools" className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors font-medium">
+                                            My Dashboard
+                                        </Link>
+                                        <Link href="/borrowed" className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors font-medium">
+                                            Borrowed Tools
+                                        </Link>
+                                        <Link href="/requests" className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors font-medium">
+                                            Lending Requests
+                                        </Link>
+                                        <div className="h-px bg-gray-100 my-1" />
+                                        <button 
+                                            onClick={() => logout()}
+                                            className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors font-bold"
+                                        >
+                                            Log out
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Link href="/login" className="block px-4 py-2.5 text-sm text-gray-900 hover:bg-gray-50 transition-colors font-bold">
+                                            Log in
+                                        </Link>
+                                        <Link href="/signup" className="block px-4 py-2.5 text-sm text-[#FF385C] hover:bg-[#FF385C]/5 transition-colors font-bold">
+                                            Sign up
+                                        </Link>
+                                    </>
+                                )}
+                            </div>
+                        </div>
                     </nav>
 
                     {/* ── Mobile hamburger ── */}
@@ -165,13 +205,49 @@ export default function Navbar() {
                             {label}
                         </Link>
                     ))}
-                    <Link
-                        href="/borrowed"
-                        onClick={() => setMobileOpen(false)}
-                        className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors"
-                    >
-                        My Borrowed
-                    </Link>
+                    
+                    <div className="h-px bg-gray-100 my-2 mx-4" />
+                    
+                    {currentUser ? (
+                        <>
+                            <div className="px-4 py-2">
+                                <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">Account</p>
+                                <div className="flex items-center gap-3">
+                                    <Avatar src={currentUser.avatar} name={currentUser.name} size="sm" />
+                                    <div>
+                                        <p className="text-sm font-bold text-gray-900">{currentUser.name}</p>
+                                        <p className="text-xs text-gray-500 truncate">{currentUser.email}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={() => {
+                                    setMobileOpen(false);
+                                    logout();
+                                }}
+                                className="w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold text-red-600 hover:bg-red-50 transition-colors"
+                            >
+                                Log out
+                            </button>
+                        </>
+                    ) : (
+                        <div className="space-y-1">
+                            <Link
+                                href="/login"
+                                onClick={() => setMobileOpen(false)}
+                                className="block px-4 py-2.5 rounded-xl text-sm font-bold text-gray-900 hover:bg-gray-50 transition-colors"
+                            >
+                                Log in
+                            </Link>
+                            <Link
+                                href="/signup"
+                                onClick={() => setMobileOpen(false)}
+                                className="block px-4 py-2.5 rounded-xl text-sm font-bold text-[#FF385C] hover:bg-[#FF385C]/5 transition-colors"
+                            >
+                                Sign up
+                            </Link>
+                        </div>
+                    )}
                 </div>
             )}
         </header>

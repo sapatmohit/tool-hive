@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { getItemById, updateItem, deleteItem } from "@/lib/db";
 import { BorrowRequest } from "@/types";
+import { borrowRequestSchema } from "@/lib/schemas";
+
+const partialRequestSchema = borrowRequestSchema.partial();
 
 export async function GET(
     request: Request,
@@ -22,18 +25,34 @@ export async function PATCH(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params;
     try {
-        const { id } = await params;
         const body = await request.json();
-        const updatedRequest = await updateItem<BorrowRequest>("requests", id, body);
+
+        // Validate partial update
+        const result = partialRequestSchema.safeParse(body);
+        if (!result.success) {
+            return NextResponse.json(
+                { 
+                    error: result.error.issues[0].message, 
+                    code: "VALIDATION_ERROR",
+                    details: result.error.issues 
+                },
+                { status: 400 }
+            );
+        }
+
+        const updatedRequest = await updateItem<BorrowRequest>("requests", id, result.data);
         if (!updatedRequest) {
             return NextResponse.json({ error: "Request not found" }, { status: 404 });
         }
         return NextResponse.json(updatedRequest);
     } catch (error) {
+        console.error(`PATCH /api/requests/${id} error:`, error);
         return NextResponse.json({ error: "Failed to update request" }, { status: 500 });
     }
 }
+
 
 export async function DELETE(
     request: Request,

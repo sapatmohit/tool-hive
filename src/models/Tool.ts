@@ -19,6 +19,10 @@ export interface ITool extends Document {
     image: string;
     rating: number;
     reviewCount: number;
+    coordinates?: {
+        type: "Point";
+        coordinates: [number, number];
+    };
 }
 
 const ToolSchema = new Schema<ITool>(
@@ -34,9 +38,15 @@ const ToolSchema = new Schema<ITool>(
         image: { type: String, default: "" },
         rating: { type: Number, default: 0 },
         reviewCount: { type: Number, default: 0 },
+        coordinates: {
+            type: { type: String, enum: ['Point'], default: 'Point' },
+            coordinates: { type: [Number], default: [0, 0] } // [lng, lat]
+        }
     },
     { timestamps: true }
 );
+
+ToolSchema.index({ coordinates: "2dsphere" });
 
 // Prevent model re-registration during Next.js hot-reload
 const Tool: Model<ITool> =
