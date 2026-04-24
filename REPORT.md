@@ -6,8 +6,9 @@
 > **Course / Subject:** Advanced Web & Software Technologies Lab (AWSTL)  
 > **Project Title:** ToolHive — Neighborhood Tool Library  
 > **Platform:** Web Application (Next.js 16)  
-> **Report Date:** March 2026  
+> **Report Date:** April 2026  
 > **Repository:** `sapatmohit/tool-hive`
+> **Version:** `v0.2.0` (Stable Backend)
 
 ---
 
@@ -86,13 +87,14 @@ After ToolHive:   Neighbor A lists drill → Neighbor B borrows it → pays smal
 |---|---|---|
 | **Framework** | Next.js (App Router) | 16.1.6 |
 | **Language** | TypeScript | ^5 |
+| **Database** | MongoDB (Atlas) | 8.x (Server) |
+| **ODM** | Mongoose | ^8.10.0 |
+| **Authentication** | Custom (Bcrypt + JWT simulation) | — |
 | **UI Library** | React | 19.2.3 |
 | **Styling** | Tailwind CSS | ^4 |
 | **Icons** | React Icons (Ionicons 5) | ^5.5.0 |
-| **Runtime** | Node.js / Bun | Latest |
-| **Linting** | ESLint + eslint-config-next | 16.1.6 |
 | **Package Manager** | Bun | Latest |
-| **Deployment** | Railway (Cloud PaaS) | — |
+| **Deployment** | Railway (App) + Atlas (DB) | — |
 
 ### Why These Choices?
 
@@ -109,7 +111,7 @@ After ToolHive:   Neighbor A lists drill → Neighbor B borrows it → pays smal
 ToolHive follows a **Simplified Layered Architecture** designed for zero-friction API migration. The four layers are strictly separated and communicate only through defined interfaces.
 
 ```mermaid
-graph TD
+flowchart TD
     subgraph "App Layer (Next.js App Router)"
         A["/  Home"] 
         B["/browse"]
@@ -125,7 +127,6 @@ graph TD
         I[FilterSidebar]
         J[PaymentModal]
         K[RequestCard]
-        L[17 components total]
     end
 
     subgraph "Service Layer (src/services)"
@@ -135,27 +136,47 @@ graph TD
         P[toolsService.ts]
     end
 
-    subgraph "API Abstraction"
+    subgraph "API Gateway"
         Q[apiClient.ts]
     end
 
-    subgraph "API Routes (app/api)"
+    subgraph "Server Layer (app/api)"
         R[/api/tools]
         S[/api/users]
         T[/api/requests]
     end
 
-    subgraph "Data Layer (src/data)"
-        U[tools.json]
-        V[users.json]
-        W[requests.json]
+    subgraph "Data Access (src/lib)"
+        U[db.ts]
     end
 
-    A & B & C & D & E & F --> G & H & I & J & K
-    G & H & I & J & K --> M & N & O & P
+    subgraph "Database (MongoDB Atlas)"
+        V[(Tools Collection)]
+        W[(Users Collection)]
+        X[(Requests Collection)]
+    end
+
+    %% Connections
+    A --> G
+    B --> H
+    C --> J
+    D --> I
+    E --> K
+    F --> K
+
+    G & H & I & J & K --> M
+    G & H & I & J & K --> N
+    G & H & I & J & K --> O
+    G & H & I & J & K --> P
+
     M & N & O & P --> Q
-    Q --> R & S & T
-    R & S & T --> U & V & W
+    Q --> R
+    Q --> S
+    Q --> T
+    R & S & T --> U
+    U --> V
+    U --> W
+    U --> X
 ```
 
 ![System Architecture Diagram](architecture_daigram.png)
@@ -189,11 +210,13 @@ tool-hive/
 ├── src/
 │   ├── components/               ← 17 reusable UI components
 │   ├── services/                 ← 5 service files (data layer abstraction)
-│   ├── context/                  — AuthContext (mock auth)
-│   ├── data/                     — tools.json, users.json, requests.json
+│   ├── models/                   — Mongoose Models (Tool, User, etc.)
+│   ├── context/                  — AuthContext (Real auth integration)
+│   ├── data/                     — JSON seeds (legacy/development)
 │   ├── types/                    — Shared TypeScript interfaces
-│   └── lib/                      — DB helpers (getItemById, updateItem, etc.)
+│   └── lib/                      — DB helpers (Mongoose wrappers)
 │
+├── scripts/                      — seed.ts, fix-images.ts
 ├── architecture.md               ← Living architecture document
 └── package.json
 ```
@@ -369,14 +392,45 @@ interface BorrowRequest {
 }
 ```
 
-### 7.4 Sample Data Summary
+### 7.4 Review
 
-| Entity | Count | Locations |
+```typescript
+interface Review {
+    id: string;           // e.g. "rev-001"
+    targetId: string;     // FK → Tool or User
+    targetType: "tool" | "user";
+    authorId: string;     // FK → User
+    rating: number;       // 1–5
+    comment: string;
+    createdAt: string;
+}
+```
+
+### 7.5 Notification
+
+```typescript
+interface Notification {
+    id: string;
+    userId: string;
+    type: "request" | "message" | "system";
+    title: string;
+    message: string;
+    link?: string;
+    read: boolean;
+    createdAt: string;
+}
+```
+
+### 7.6 Sample Data Summary (Seeded to MongoDB)
+
+| Entity | Count | Status |
 |---|---|---|
-| Tools | 15 | Mumbai, Bengaluru, Delhi, Pune, Chennai |
-| Users | 5 | Across 5 cities in 4 states |
-| Requests | 8 | Various statuses (pending/approved/rejected) |
-| Categories | 6 | Power Tools, Outdoor, Safety & Climbing, Painting, Air Tools, Construction |
+| Tools | 15 | Active in MongoDB |
+| Users | 5 | Hashed (Bcrypt) in MongoDB |
+| Requests | 8 | Active in MongoDB |
+| Reviews | — | Supported (Schema ready) |
+| Notifications| — | Supported (Schema ready) |
+| Categories | 6 | Power Tools, Outdoor, Construction, etc. |
 
 ---
 
@@ -471,7 +525,7 @@ Identical pattern for `/api/users` and `/api/requests`.
 
 ### Database Helper (`src/lib/db.ts`)
 
-Abstracts JSON file I/O for Phase 1:
+Abstracts database operations, enabling a seamless transition from JSON to MongoDB:
 
 ```typescript
 getItems<T>(collection)           // Read all items
@@ -587,7 +641,7 @@ Browse Page reads URL params
         ↓
 searchTools(query, filters) called
         ↓
-apiClient.get('/tools') → /api/tools → tools.json
+apiClient.get('/tools') → /api/tools → db.ts → MongoDB (Tools Collection)
         ↓
 In-memory filter pipeline runs (keyword → category → location → availability → price → sort)
         ↓
@@ -624,7 +678,7 @@ Owner opens /requests
         ↓
 getRequestsForOwner(ownerId)
         ↓
-Parallel fetch: requests.json + tools.json + users.json
+Parallel fetch from MongoDB: Requests + Tools + Users Collections
         ↓
 Requests joined with tool & requester data
         ↓
@@ -641,23 +695,22 @@ UI updates optimistically
 
 ## 13. Current Project Status
 
-### Phase 1 — Frontend (✅ Complete)
+### Phase 2 — Backend Integration (✅ Complete)
 
 | Feature | Status |
 |---|---|
-| Home / Landing page | ✅ Complete |
-| Browse with filters | ✅ Complete |
-| Tool detail page | ✅ Complete |
-| My Tools (owner dashboard) | ✅ Complete |
-| Borrow Requests management | ✅ Complete |
-| Borrowed tools tracker | ✅ Complete |
-| Payment flow (mock) | ✅ Complete |
+| MongoDB Database Setup | ✅ Complete |
+| Mongoose Schema Definitions | ✅ Complete |
+| JSON-to-Mongo Seed Script | ✅ Complete |
+| API Route Migration | ✅ Complete |
+| Real Authentication (Signup) | ✅ Complete |
+| Password Hashing (Bcrypt) | ✅ Complete |
+| Geo-spatial Query Support | ✅ Complete |
+| Service Layer Preservation | ✅ Complete (Zero UI changes) |
 | Responsive design (mobile) | ✅ Complete |
-| REST API routes | ✅ Complete |
 | TypeScript types | ✅ Complete |
 | Component library (17 components) | ✅ Complete |
-| Service layer (5 services) | ✅ Complete |
-| Mock auth context | ✅ Complete |
+| Deployment (Railway + Atlas) | ✅ Complete |
 
 ### Deployment
 
@@ -670,12 +723,12 @@ UI updates optimistically
 
 ## 14. Future Roadmap (Phase 2)
 
-### Backend Integration
+### Backend Integration (Final Polish)
 
-- Replace JSON files with a **PostgreSQL** or **MongoDB** database
-- Replace mock auth (`AuthContext`) with **NextAuth.js** (Google / Email sign-in)
-- Connect `simulatePayment()` to **Razorpay** or **Stripe** for real INR transactions
-- Change only `apiClient.ts` — zero component changes needed (by design)
+- Replace mock payment logic with **Razorpay** or **Stripe** integration
+- Implement **NextAuth.js** for robust session management
+- Complete **Notification System** (WebSocket/SSE)
+- Change only `apiClient.ts` for third-party integrations — zero component changes needed (by design)
 
 ### Planned New Features
 
