@@ -122,38 +122,38 @@ flowchart TD
     end
 
     subgraph "UI Layer (src/components)"
-        G[Navbar]
-        H[ToolCard]
-        I[FilterSidebar]
-        J[PaymentModal]
-        K[RequestCard]
+        G["Navbar"]
+        H["ToolCard"]
+        I["FilterSidebar"]
+        J["PaymentModal"]
+        K["RequestCard"]
     end
 
     subgraph "Service Layer (src/services)"
-        M[browseService.ts]
-        N[requestService.ts]
-        O[paymentService.ts]
-        P[toolsService.ts]
+        M["browseService.ts"]
+        N["requestService.ts"]
+        O["paymentService.ts"]
+        P["toolsService.ts"]
     end
 
     subgraph "API Gateway"
-        Q[apiClient.ts]
+        Q["apiClient.ts"]
     end
 
     subgraph "Server Layer (app/api)"
-        R[/api/tools]
-        S[/api/users]
-        T[/api/requests]
+        R["/api/tools"]
+        S["/api/users"]
+        T["/api/requests"]
     end
 
     subgraph "Data Access (src/lib)"
-        U[db.ts]
+        U["db.ts"]
     end
 
     subgraph "Database (MongoDB Atlas)"
-        V[(Tools Collection)]
-        W[(Users Collection)]
-        X[(Requests Collection)]
+        V[("Tools Collection")]
+        W[("Users Collection")]
+        X[("Requests Collection")]
     end
 
     %% Connections
@@ -164,16 +164,43 @@ flowchart TD
     E --> K
     F --> K
 
-    G & H & I & J & K --> M
-    G & H & I & J & K --> N
-    G & H & I & J & K --> O
-    G & H & I & J & K --> P
+    G --> M
+    H --> M
+    I --> M
+    J --> M
+    K --> M
 
-    M & N & O & P --> Q
+    G --> N
+    H --> N
+    I --> N
+    J --> N
+    K --> N
+
+    G --> O
+    H --> O
+    I --> O
+    J --> O
+    K --> O
+
+    G --> P
+    H --> P
+    I --> P
+    J --> P
+    K --> P
+
+    M --> Q
+    N --> Q
+    O --> Q
+    P --> Q
+
     Q --> R
     Q --> S
     Q --> T
-    R & S & T --> U
+
+    R --> U
+    S --> U
+    T --> U
+
     U --> V
     U --> W
     U --> X
