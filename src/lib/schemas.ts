@@ -13,8 +13,8 @@ export const toolSchema = z.object({
     description: z.string().min(10, "Description must be at least 10 characters"),
     category: z.string().min(1, "Category is required"),
     location: z.string().min(1, "Location is required"),
-    pricePerDay: z.number().positive("Price must be a positive number"),
-    image: z.string().url("Invalid image URL"),
+    pricePerDay: z.coerce.number().positive("Price must be a positive number"),
+    image: z.string().min(1, "Image is required"),
     ownerId: z.string().min(1, "Owner ID is required"),
 });
 

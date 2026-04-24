@@ -35,6 +35,7 @@ const MODEL_MAP = {
 
 /** Convert a Mongoose Tool document → plain Tool (using toolId as "id"). */
 function serializeTool(doc: any): Tool {
+    if (!doc) return null as any;
     const obj = doc.toObject ? doc.toObject({ versionKey: false }) : doc;
     return {
         id: obj.toolId,
@@ -53,6 +54,7 @@ function serializeTool(doc: any): Tool {
 
 /** Convert a Mongoose User document → plain User (using userId as "id"). */
 function serializeUser(doc: any): User {
+    if (!doc) return null as any;
     const obj = doc.toObject ? doc.toObject({ versionKey: false }) : doc;
     return {
         id: obj.userId,
@@ -69,6 +71,7 @@ function serializeUser(doc: any): User {
 }
 
 function serializeRequest(doc: any): BorrowRequest {
+    if (!doc) return null as any;
     const obj = doc.toObject ? doc.toObject({ versionKey: false }) : doc;
     return {
         id: obj.requestId,
@@ -87,6 +90,7 @@ function serializeRequest(doc: any): BorrowRequest {
 
 /** Convert a Mongoose Review document → plain Review. */
 function serializeReview(doc: any): Review {
+    if (!doc) return null as any;
     const obj = doc.toObject ? doc.toObject({ versionKey: false }) : doc;
     return {
         id: obj.reviewId,
@@ -103,6 +107,7 @@ function serializeReview(doc: any): Review {
 
 /** Convert a Mongoose Message document → plain Message. */
 function serializeMessage(doc: any): Message {
+    if (!doc) return null as any;
     const obj = doc.toObject ? doc.toObject({ versionKey: false }) : doc;
     return {
         id: obj.messageId,
@@ -118,6 +123,7 @@ function serializeMessage(doc: any): Message {
 
 /** Convert a Mongoose Notification document → plain Notification. */
 function serializeNotification(doc: any): Notification {
+    if (!doc) return null as any;
     const obj = doc.toObject ? doc.toObject({ versionKey: false }) : doc;
     return {
         id: obj.notificationId,

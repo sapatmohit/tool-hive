@@ -13,7 +13,8 @@ import { Tool } from "@/types";
  * @returns {Promise<Array>}
  */
 export async function getAllTools(): Promise<Tool[]> {
-    return get<Tool[]>("/tools");
+    const response = await get<{ tools: Tool[]; total: number }>("/tools");
+    return response.tools || [];
 }
 
 /**
@@ -65,7 +66,8 @@ export async function searchTools(
  * @returns {Promise<string[]>}
  */
 export async function getCategories(): Promise<string[]> {
-    const tools = await get<Tool[]>("/tools");
+    const response = await get<{ tools: Tool[]; total: number }>("/tools");
+    const tools = response.tools || [];
     const cats = [...new Set(tools.map((t: Tool) => t.category))];
     return ["All", ...cats];
 }

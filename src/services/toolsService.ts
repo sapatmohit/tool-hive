@@ -25,7 +25,8 @@ function requireAuth(currentUserId: string | null): void {
  * @returns {Promise<Array>}
  */
 export async function getMyTools(userId: string): Promise<Tool[]> {
-    const tools = await get<Tool[]>("/tools");
+    const response = await get<{ tools: Tool[]; total: number }>("/tools");
+    const tools = response.tools || [];
     return tools.filter((t: Tool) => t.ownerId === userId);
 }
 

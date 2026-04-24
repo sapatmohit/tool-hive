@@ -44,7 +44,8 @@ export default function ToolForm({ initial = null, onSubmit, onCancel, loading =
     const validate = () => {
         const e: Record<string, string> = {};
         if (!form.name?.trim()) e.name = "Tool name is required";
-        if (!form.description?.trim()) e.description = "Description is required";
+        if (!form.description?.trim() || form.description.trim().length < 10) 
+            e.description = "Description must be at least 10 characters";
         if (!form.location?.trim()) e.location = "Location is required";
         if (!form.pricePerDay || Number(form.pricePerDay) <= 0)
             e.pricePerDay = "Enter a valid price";
